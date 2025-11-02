@@ -295,13 +295,8 @@ io.on("connection", (socket) => {
 // Ensure you use PORT from environment (Render will set this)
 // Health endpoints (fast)
 app.get("/healthz", (req, res) => res.status(200).json({ ok: true }));
-app.get("/ready", async (req, res) => {
-  // optional DB check if you export sequelize:
-  // try { await sequelize.authenticate(); return res.status(200).json({ ready: true }); } catch(e){ return res.status(500).json({ ready: false }); }
-  return res.status(200).json({ ready: true });
-});
 
-// bind to 0.0.0.0 so Render can route to it
+// bind to 0.0.0.0 so the container accepts external traffic
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
 });
