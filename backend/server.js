@@ -292,6 +292,23 @@ io.on("connection", (socket) => {
   });
 });
 
+// quick health & readiness checks for Render (responds fast so health checks succeed)
+app.get("/healthz", (req, res) => {
+  // quick liveness
+  return res.status(200).json({ ok: true, uptimeSeconds: Math.floor(process.uptime()) });
+});
+
+// optional readiness check that can indicate DB is ready
+app.get("/ready", async (req, res) => {
+  try {
+    // If you want to ensure DB is OK, a quick lightweight DB call can be placed here
+    // For example: await sequelize.authenticate(); // (if you export sequelize)
+    return res.status(200).json({ ready: true });
+  } catch (err) {
+    return res.status(500).json({ ready: false, error: String(err) });
+  }
+});
+
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
