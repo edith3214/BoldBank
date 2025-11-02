@@ -2,11 +2,21 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const bcrypt = require("bcrypt");
 
+// Use DATABASE_URL env var. Example Postgres URL:
+// postgres://user:pass@host:port/dbname
 const DATABASE_URL = process.env.DATABASE_URL || "sqlite:./dev.db";
 
+const isPostgres = DATABASE_URL.startsWith("postgres");
 const sequelize = new Sequelize(DATABASE_URL, {
   logging: false,
-  dialectOptions: DATABASE_URL.startsWith("postgres") ? {} : undefined,
+  dialect: isPostgres ? "postgres" : undefined,
+  // If you're connecting to Postgres that requires SSL (many managed DBs do),
+  // set DB_SSL=true in env.
+  dialectOptions: isPostgres
+    ? process.env.DB_SSL === "true"
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : {}
+    : undefined,
 });
 
 // Models
