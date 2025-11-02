@@ -72,11 +72,50 @@ function verifyToken(token) {
   }
 }
 
-// init DB & seed
-initDb().catch((err) => {
-  console.error("DB init failed", err);
-  process.exit(1);
-});
+// --- START: safe startup + optional debug logging ---
+/**
+ * Optional request logger — enable by setting DEBUG=true in Render env.
+ * Does not change app behavior; only prints incoming requests to logs.
+ */
+if (process.env.DEBUG === "true") {
+  app.use((req, res, next) => {
+    console.log(`[REQ] ${new Date().toISOString()} ${req.method} ${req.originalUrl} from ${req.ip}`);
+    next();
+  });
+}
+
+/**
+ * Start server only after DB is initialized.
+ * This prevents the container from listening before migrations/seed finish
+ * (common reason for health-check timeouts on hosted platforms).
+ */
+async function startServer() {
+  try {
+    console.log("Startup: initializing DB...");
+    await initDb();
+    console.log("Startup: DB initialized.");
+
+    // Start HTTP+Socket server (bind to 0.0.0.0 for Render)
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server listening on port ${PORT} (0.0.0.0) — NODE_ENV=${process.env.NODE_ENV || "development"}`);
+      console.log(`ALLOWED_ORIGINS=${ALLOWED_ORIGINS.join(",")}`);
+    });
+
+    // Extra helpful logs for Socket.IO lifecycle
+    io.on("connect_error", (err) => {
+      console.error("Socket.IO connect_error:", err && err.message ? err.message : err);
+    });
+
+  } catch (err) {
+    console.error("Startup failed — unable to initialize DB or start server:", err);
+    // fail fast so Render shows the error in deploy logs
+    process.exit(1);
+  }
+}
+
+// Kick it off
+startServer();
+// --- END: safe startup + optional debug logging ---
 
 // ----- auth endpoints -----
 app.post("/api/login", async (req, res) => {
@@ -295,8 +334,3 @@ io.on("connection", (socket) => {
 // Ensure you use PORT from environment (Render will set this)
 // Health endpoints (fast)
 app.get("/healthz", (req, res) => res.status(200).json({ ok: true }));
-
-// bind to 0.0.0.0 so the container accepts external traffic
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on port ${PORT}`);
-});
