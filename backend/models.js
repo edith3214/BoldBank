@@ -11,7 +11,7 @@ const sequelize = new Sequelize(DATABASE_URL, {
   logging: false,
   dialect: isPostgres ? "postgres" : undefined,
   // If you're connecting to Postgres that requires SSL (many managed DBs do),
-  // set DB_SSL=true in env.
+  // set DB_SSL=true in env (we'll tell you to add this in Render).
   dialectOptions: isPostgres
     ? process.env.DB_SSL === "true"
       ? { ssl: { require: true, rejectUnauthorized: false } }
