@@ -386,3 +386,30 @@ io.on("connection", (socket) => {
 // Ensure you use PORT from environment (Render will set this)
 // Health endpoints (fast)
 app.get("/healthz", (req, res) => res.status(200).json({ ok: true }));
+
+// TEMP debug endpoint — remove after testing
+app.get("/debug/headers", (req, res) => {
+  try {
+    const cookieHeader = req.headers.cookie || null;
+    let maskedToken = null;
+    if (cookieHeader) {
+      // find token=... and mask it
+      const match = cookieHeader.match(/token=([^;]+)/);
+      if (match) {
+        const t = match[1];
+        maskedToken = t.length > 12 ? `${t.slice(0,6)}...${t.slice(-6)}` : `${t}`;
+      }
+    }
+
+    res.json({
+      ok: true,
+      origin: req.headers.origin || null,
+      cookiePresent: !!cookieHeader,
+      cookieMasked: maskedToken,
+      userAgent: req.headers["user-agent"] || null,
+      note: "Remove this endpoint after debugging"
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
+  }
+});
