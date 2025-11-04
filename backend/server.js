@@ -72,28 +72,40 @@ function verifyToken(token) {
   }
 }
 
-// --- START: safe startup + optional debug logging ---
-/**
- * Optional request logger — enable by setting DEBUG=true in Render env.
- * Does not change app behavior; only prints incoming requests to logs.
- */
-if (process.env.DEBUG === "true") {
-  app.use((req, res, next) => {
-    console.log(`[REQ] ${new Date().toISOString()} ${req.method} ${req.originalUrl} from ${req.ip}`);
-    next();
-  });
+// --- START: improved startup + better logging + DB timeout ---
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION', err && err.stack ? err.stack : err);
+  // depending on your preference you can exit(1) here
+});
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('UNHANDLED REJECTION at Promise', p, 'reason:', reason);
+  // optionally process.exit(1);
+});
+
+// helpful quick log so Render shows process started
+console.log(`Process start: NODE_ENV=${process.env.NODE_ENV || 'development'}, PORT=${PORT}`);
+
+// ensure production frontend origin is allowed by default
+if (!ALLOWED_ORIGINS.includes('https://boldbank-frontend.onrender.com')) {
+  ALLOWED_ORIGINS.push('https://boldbank-frontend.onrender.com');
 }
 
-/**
- * Start server only after DB is initialized.
- * This prevents the container from listening before migrations/seed finish
- * (common reason for health-check timeouts on hosted platforms).
- */
+// helper to give initDb a timeout so the process doesn't hang forever
+function withTimeout(promise, ms, label = 'operation') {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms))
+  ]);
+}
+
 async function startServer() {
   try {
     console.log("Startup: initializing DB...");
-    await initDb();
-    console.log("Startup: DB initialized.");
+    const start = Date.now();
+    // Wait for initDb but fail fast if it doesn't respond within 20s (adjust as needed)
+    await withTimeout(initDb(), 20000, 'DB initialization');
+    console.log(`Startup: DB initialized (${Date.now() - start}ms).`);
 
     // Start HTTP+Socket server (bind to 0.0.0.0 for Render)
     server.listen(PORT, "0.0.0.0", () => {
@@ -101,21 +113,26 @@ async function startServer() {
       console.log(`ALLOWED_ORIGINS=${ALLOWED_ORIGINS.join(",")}`);
     });
 
-    // Extra helpful logs for Socket.IO lifecycle
+    // Socket.IO lifecycle logs
     io.on("connect_error", (err) => {
       console.error("Socket.IO connect_error:", err && err.message ? err.message : err);
     });
 
+    io.on("connection", (socket) => {
+      console.log('Socket.IO: new connection', socket.id);
+      // Note: your existing connection handler is below; this is a small additional log
+    });
+
   } catch (err) {
-    console.error("Startup failed — unable to initialize DB or start server:", err);
-    // fail fast so Render shows the error in deploy logs
+    console.error("Startup failed — unable to initialize DB or start server:", err && err.stack ? err.stack : err);
+    // Fail fast so Render shows the error in deploy logs
     process.exit(1);
   }
 }
 
 // Kick it off
 startServer();
-// --- END: safe startup + optional debug logging ---
+// --- END: improved startup + better logging + DB timeout ---
 
 // ----- auth endpoints -----
 app.post("/api/login", async (req, res) => {
