@@ -215,7 +215,16 @@ app.get("/api/transactions", async (req, res) => {
 app.patch("/api/transactions/:id/approve", async (req, res) => {
   const token = req.cookies?.token;
   const p = verifyToken(token);
-  if (!p || p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+  console.log(
+    '[DEBUG] PATCH /api/transactions/:id/approve — tokenPresent=',
+    !!token,
+    ' tokenSample=',
+    token ? token.slice(0, 16) + '...' : null,
+    ' decoded=',
+    p
+  );
+  if (!p) return res.status(401).json({ message: "Not authenticated" }); // clearer status
+  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
 
   const tx = await Transaction.findByPk(req.params.id);
   if (!tx) return res.status(404).json({ message: "Not found" });
@@ -228,11 +237,19 @@ app.patch("/api/transactions/:id/approve", async (req, res) => {
   res.json(tx);
 });
 
-// admin decline
 app.patch("/api/transactions/:id/decline", async (req, res) => {
   const token = req.cookies?.token;
   const p = verifyToken(token);
-  if (!p || p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+  console.log(
+    '[DEBUG] PATCH /api/transactions/:id/decline — tokenPresent=',
+    !!token,
+    ' tokenSample=',
+    token ? token.slice(0, 16) + '...' : null,
+    ' decoded=',
+    p
+  );
+  if (!p) return res.status(401).json({ message: "Not authenticated" });
+  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
 
   const { forceLogout } = req.body;
   const tx = await Transaction.findByPk(req.params.id);
