@@ -143,7 +143,25 @@ app.post("/api/login", async (req, res) => {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ message: "Invalid credentials" });
   const token = signToken({ id: user.id, email: user.email, role: user.role });
-  res.cookie("token", token, { httpOnly: true, sameSite: "lax", maxAge: 8 * 60 * 60 * 1000 });
+
+  // set cookie with appropriate SameSite & Secure based on environment
+  const cookieOptions = {
+    httpOnly: true,
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    path: '/',
+  };
+
+  // In production (frontend and backend are HTTPS + cross-site), must use SameSite=None and Secure
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.sameSite = 'none';
+    cookieOptions.secure = true; // requires HTTPS
+  } else {
+    // local dev convenience
+    cookieOptions.sameSite = 'lax';
+    cookieOptions.secure = false;
+  }
+
+  res.cookie("token", token, cookieOptions);
   res.json({ id: user.id, email: user.email, role: user.role });
 });
 
