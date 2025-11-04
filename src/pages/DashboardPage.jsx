@@ -357,10 +357,10 @@ export default function DashboardPage() {
         .actions-intro p{margin:4px 0 0;color:var(--muted)}
 
         .actions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px;
-        padding-left:50px;
+        padding-left:10px;
         background:rgba(255, 255, 255, 1);
         border-radius:10px;
-        padding-right:50px;
+        padding-right:10px;
         padding-top:20px;
         padding-bottom:20px;
         margin-right:20px;
@@ -380,8 +380,8 @@ export default function DashboardPage() {
         padding-bottom:10px;
         margin-right:20px;
         margin-left:20px;
-        padding-right:30px;
-        padding-left:30px;}
+        padding-right:50px;
+        padding-left:50px;}
         /* spacing between stacked card elements (keeps original color & radius) */
         .visa-card + .visa-card { margin-top:12px; }
         .cards-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -392,8 +392,7 @@ export default function DashboardPage() {
           border-radius:12px;
           display:flex;
           flex-direction:column;
-          margin-left:150px;
-          margin-right:150px;
+          
         }
         .card-small{font-weight:700}
         .card-title{font-size:12px;opacity:0.95;margin-top:4px}
