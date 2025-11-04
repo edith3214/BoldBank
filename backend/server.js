@@ -72,6 +72,21 @@ function verifyToken(token) {
   }
 }
 
+// add these helpers right after verifyToken()
+function requireAuth(req, res, next) {
+  const token = req.cookies?.token;
+  const p = verifyToken(token);
+  if (!p) return res.status(401).json({ message: "Not authenticated" });
+  req.user = p;
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+  next();
+}
+
 // --- START: improved startup + better logging + DB timeout ---
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION', err && err.stack ? err.stack : err);
@@ -211,58 +226,30 @@ app.get("/api/transactions", async (req, res) => {
   res.json(mine);
 });
 
-// admin approve
-app.patch("/api/transactions/:id/approve", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  console.log(
-    '[DEBUG] PATCH /api/transactions/:id/approve — tokenPresent=',
-    !!token,
-    ' tokenSample=',
-    token ? token.slice(0, 16) + '...' : null,
-    ' decoded=',
-    p
-  );
-  if (!p) return res.status(401).json({ message: "Not authenticated" }); // clearer status
-  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
-
+// replace approve/decline routes with middleware-based versions
+app.patch('/api/transactions/:id/approve', requireAuth, requireAdmin, async (req, res) => {
   const tx = await Transaction.findByPk(req.params.id);
-  if (!tx) return res.status(404).json({ message: "Not found" });
+  if (!tx) return res.status(404).json({ message: 'Not found' });
 
-  tx.status = "Completed";
-  tx.approvedBy = p.email;
+  tx.status = 'Completed';
+  tx.approvedBy = req.user.email;
   await tx.save();
 
-  emitToUser(tx.ownerEmail, "transaction:update", tx.toJSON());
+  emitToUser(tx.ownerEmail, 'transaction:update', tx.toJSON());
   res.json(tx);
 });
 
-app.patch("/api/transactions/:id/decline", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  console.log(
-    '[DEBUG] PATCH /api/transactions/:id/decline — tokenPresent=',
-    !!token,
-    ' tokenSample=',
-    token ? token.slice(0, 16) + '...' : null,
-    ' decoded=',
-    p
-  );
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
-
+app.patch('/api/transactions/:id/decline', requireAuth, requireAdmin, async (req, res) => {
   const { forceLogout } = req.body;
   const tx = await Transaction.findByPk(req.params.id);
-  if (!tx) return res.status(404).json({ message: "Not found" });
+  if (!tx) return res.status(404).json({ message: 'Not found' });
 
-  tx.status = "Declined";
-  tx.declinedBy = p.email;
+  tx.status = 'Declined';
+  tx.declinedBy = req.user.email;
   await tx.save();
 
-  emitToUser(tx.ownerEmail, "transaction:update", tx.toJSON());
-  if (forceLogout) {
-    emitToUser(tx.ownerEmail, "force-logout", { reason: "declined_by_admin" });
-  }
+  emitToUser(tx.ownerEmail, 'transaction:update', tx.toJSON());
+  if (forceLogout) emitToUser(tx.ownerEmail, 'force-logout', { reason: 'declined_by_admin' });
 
   res.json(tx);
 });
