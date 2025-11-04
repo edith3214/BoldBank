@@ -51,6 +51,16 @@ export function BankProvider({ children }) {
       socket.connect();
     }
 
+    // connection debug handlers (attach once per effect run)
+    const onConnect = () => {
+      console.log("Socket connected (client) id=", socket.id, "connected=", socket.connected);
+    };
+    const onConnectError = (err) => {
+      console.warn("Socket connect_error (client):", err);
+    };
+    socket.on("connect", onConnect);
+    socket.on("connect_error", onConnectError);
+
     // Handlers
     const onCreated = (tx) => {
       setTransactions((prev) => {
@@ -77,6 +87,8 @@ export function BankProvider({ children }) {
       socket.off("transactions:created", onCreated);
       socket.off("transaction:update", onUpdate);
       socket.off("force-logout", onForceLogout);
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onConnectError);
       // Do not disconnect here so other tabs remain connected; the disconnect logic above handles logout.
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { socket } from "../lib/socket";
 
 const AuthContext = createContext();
 
@@ -45,7 +46,21 @@ export function AuthProvider({ children }) {
         throw new Error(json.message || "Login failed");
       }
       const data = await res.json();
+
+      // set user in context
       setUser(data);
+
+      // RECONNECT SOCKET so handshake includes new cookie/token
+      try {
+        if (socket && socket.connected) {
+          // disconnect existing connection first to ensure server re-handshakes the cookie
+          socket.disconnect();
+        }
+        socket.connect();
+      } catch (e) {
+        console.warn("Socket reconnect failed:", e);
+      }
+
       // navigate by role
       if (data.role === "admin") navigate("/admin", { replace: true });
       else navigate("/dashboard", { replace: true });
@@ -65,6 +80,8 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error("Logout error", e);
     } finally {
+      // disconnect socket to clear server-side associations
+      try { if (socket && socket.connected) socket.disconnect(); } catch (e) {}
       setUser(null);
       if (window.location.pathname !== "/login") navigate("/login", { replace: true });
     }
