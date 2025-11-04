@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
 import ErrorPage from "./pages/ErrorPage";
 import TransferPage from "./pages/TransferPage";
+import DepositPage from "./pages/DepositPage"; // added
 import TransactionHistory from "./pages/HistoryPage";
 import ChatPage from "./pages/ChatPage";
 
@@ -42,6 +43,15 @@ export default function App() {
           element={
             <PrivateRoute allowedRole="user">
               <TransferPage />
+            </PrivateRoute>
+          }
+        />
+
+           <Route
+          path="/deposit"
+          element={
+            <PrivateRoute allowedRole="user">
+              <DepositPage />
             </PrivateRoute>
           }
         />
