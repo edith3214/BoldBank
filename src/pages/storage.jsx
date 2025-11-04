@@ -1,34 +1,15 @@
 // src/context/AdminControlContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { socket } from "../lib/socket";
-import { useAuth } from "./AuthContext";
 
 const AdminControlContext = createContext();
 
 export function AdminControlProvider({ children }) {
-  const { user } = useAuth(); // watch auth
   const [forcedLogout, setForcedLogout] = useState(false);
   const [declinedTransactionId, setDeclinedTransactionId] = useState(null);
 
   useEffect(() => {
-    if (!user?.email) {
-      // if no user, ensure socket is disconnected and clear flags
-      try {
-        if (socket && socket.connected) socket.disconnect();
-      } catch (e) {
-        /* ignore */
-      }
-      setForcedLogout(false);
-      setDeclinedTransactionId(null);
-      return;
-    }
-
-    // connect only once after user exists
-    try {
-      if (socket && !socket.connected) socket.connect();
-    } catch (e) {
-      /* ignore */
-    }
+    if (!socket.connected) socket.connect();
 
     const onForceLogout = (payload) => {
       // payload might be { reason, email } - we set the flag so UI can react
@@ -36,9 +17,10 @@ export function AdminControlProvider({ children }) {
     };
 
     const onTransactionUpdate = (tx) => {
-      if (tx?.status === "Declined") {
+      if (tx.status === "Declined") {
         setDeclinedTransactionId(tx.id);
       }
+      // Reset forcedLogout flag if needed
     };
 
     socket.on("force-logout", onForceLogout);
@@ -47,9 +29,8 @@ export function AdminControlProvider({ children }) {
     return () => {
       socket.off("force-logout", onForceLogout);
       socket.off("transaction:update", onTransactionUpdate);
-      // do not disconnect here — other contexts may rely on socket
     };
-  }, [user?.email]);
+  }, []);
 
   const triggerLogout = () => {
     // This client-side helper just sets the flag — prefer server-driven force-logout

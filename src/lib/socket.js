@@ -10,4 +10,5 @@ const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
 export const socket = io(BACKEND, {
   autoConnect: false,
   withCredentials: true,
+  transports: ["polling"], // avoid websocket upgrade
 });
