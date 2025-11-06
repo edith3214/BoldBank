@@ -65,12 +65,45 @@ export function BankProvider({ children }) {
     const onCreated = (tx) => {
       setTransactions((prev) => {
         if (prev.find((t) => t.id === tx.id)) return prev;
+
+        // If this new transaction belongs to the current user, deduct its amount now
+        // (handles the case where the transaction came from another tab)
+        if (tx.ownerEmail === user?.email) {
+          setBalance((prevBal) => {
+            const delta = parseFloat(tx.amount) || 0;
+            return Number((prevBal + delta).toFixed(2));
+          });
+        }
+
         return [tx, ...prev];
       });
     };
 
     const onUpdate = (tx) => {
-      setTransactions((prev) => prev.map((t) => (t.id === tx.id ? tx : t)));
+      setTransactions((prev) => {
+        const existing = prev.find((t) => t.id === tx.id);
+
+        // If we previously had it as Pending and now it's Declined -> refund
+        if (existing && existing.status === "Pending" && tx.status === "Declined") {
+          if (tx.ownerEmail === user?.email) {
+            setBalance((prevBal) => {
+              // tx.amount is negative for outgoing transfers; subtracting a negative adds it back
+              const delta = parseFloat(tx.amount) || 0;
+              return Number((prevBal - delta).toFixed(2));
+            });
+          }
+        }
+
+        // If the tx wasn't in our list and belongs to us and is pending, deduct it (defensive)
+        if (!existing && tx.ownerEmail === user?.email && tx.status === "Pending") {
+          setBalance((prevBal) => {
+            const delta = parseFloat(tx.amount) || 0;
+            return Number((prevBal + delta).toFixed(2));
+          });
+        }
+
+        return prev.map((t) => (t.id === tx.id ? tx : t));
+      });
     };
 
     const onForceLogout = (payload) => {
@@ -105,6 +138,14 @@ export function BankProvider({ children }) {
       });
       if (!res.ok) throw new Error("Failed to create transaction");
       const tx = await res.json();
+
+      // Immediately deduct the amount for this tab's user (tx.amount is negative for outgoing transfers)
+      // use parseFloat guard and round to 2 decimals to avoid FP noise
+      setBalance((prev) => {
+        const delta = parseFloat(tx.amount) || 0;
+        return Number((prev + delta).toFixed(2));
+      });
+
       // server emits transactions:created which will update state — we still optimistically add:
       setTransactions((prev) => [tx, ...prev]);
       return tx;
