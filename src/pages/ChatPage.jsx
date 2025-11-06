@@ -121,7 +121,7 @@ export default function ChatPage() {
       <form onSubmit={handleSend} className="d-flex gap-2">
         <input
           className="form-control"
-          placeholder={`Message ${other}`}
+          placeholder={`Message trust support ${other}`}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
