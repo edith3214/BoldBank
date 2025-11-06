@@ -6,7 +6,7 @@ import { FaRegBuilding } from "react-icons/fa";
 import { MdHistory } from "react-icons/md";
 import { IoMdAdd } from "react-icons/io";
 import { FiHome } from "react-icons/fi";
-import { IoStatsChartOutline } from "react-icons/io5";
+import { IoStatsChartOutline, IoGridOutline } from "react-icons/io5";
 import { CiCreditCard1 } from "react-icons/ci";
 import { GoPerson } from "react-icons/go";
 import { BiHide } from "react-icons/bi";
@@ -316,7 +316,7 @@ export default function DashboardPage() {
             aria-label="menu"
             onClick={() => setShowMenu(true)}
           >
-            ▦
+            <IoGridOutline />
           </button>
         </div>
         <button className="nav-item" aria-label="cards"><CiCreditCard1 /></button>
@@ -341,13 +341,13 @@ export default function DashboardPage() {
             <p className="menu-sub">Select an option to continue</p>
 
             <div className="menu-grid">
-              <button>🏠 Home</button>
+              <button><FiHome />Home</button>
               
               <button>📊 Activity</button>
-              <button>💳 Cards</button>
-              <button>💸 Transfer</button>
+              <button><CiCreditCard1 /> Cards</button>
+              <button><IoPaperPlaneOutline /> Transfer</button>
               <button>🌐 Int’l Wire</button>
-              <button>💰 Deposit</button>
+              <button><IoMdAdd /> Deposit</button>
               <button>💵 Loan</button>
               <button>🧾 IRS Refund</button>
               <button>⚙️ Settings</button>
