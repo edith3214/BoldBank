@@ -167,7 +167,7 @@ export default function LoginPage() {
                     Contact Us
                   </a>
                 </div>
-                <p className="mt-3 mb-0">© 2024 Trust Bank. All Rights Reserved.</p>
+                <p className="mt-3 mb-0">© 2025 Trust Bank. All Rights Reserved.</p>
               </footer>
             </div>
           </div>
