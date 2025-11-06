@@ -60,6 +60,16 @@ export default function DashboardPage() {
     };
   }, [showDrawer]);
 
+  // show live time/date for a US timezone
+  const [now, setNow] = useState(new Date());
+  // change this to another US timezone if you prefer, e.g. "America/Chicago"
+  const US_TIMEZONE = "America/New_York";
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="dashboard-page">
       <header className="topbar">
@@ -144,14 +154,30 @@ export default function DashboardPage() {
             <div className="account-left">
               <div className="avatar-big">RB</div>
               <div className="greetings">
-                <div className="greet-line">Good Afternoon</div>
+                <div className="greet-line">Good day</div>
                 <div className="username">Roberto</div>
               </div>
             </div>
 
-            <div className="account-right">
-              <div className="time">16:15:42</div>
-              <div className="date">Thursday, April 3, 2025</div>
+            <div className="account-right" aria-live="polite">
+              <div className="time">
+                {new Intl.DateTimeFormat("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: true,
+                  timeZone: US_TIMEZONE,
+                }).format(now)}
+              </div>
+              <div className="date">
+                {new Intl.DateTimeFormat("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  timeZone: US_TIMEZONE,
+                }).format(now)}
+              </div>
             </div>
 
             <div className="balance-block">
