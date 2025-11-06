@@ -90,7 +90,7 @@ export default function DashboardPage() {
 
                 <div className="acct-actions">
                   <button className="btn trans">Transactions</button>
-                  <button className="btn topup">Top up</button>
+                  {/* <button className="btn topup">Top up</button> */}
                 </div>
               </div>
             </div>
