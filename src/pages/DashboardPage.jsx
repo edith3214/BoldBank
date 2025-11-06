@@ -121,19 +121,22 @@ export default function DashboardPage() {
 
             <nav className="drawer-nav" aria-label="Main">
               <Link to="/transfer" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                💸 Transfer
+              <IoPaperPlaneOutline aria-hidden="true"/>
+                Transfer
               </Link>
 
-              <Link to="/history" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                🧾 History
+              <Link to="/history" className="drawer-link" onClick={() => setShowDrawer(false)}>               
+                <MdHistory aria-hidden="true"/>
+                History
               </Link>
 
               <Link to="/deposit" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                💰 Deposit
+                <IoMdAdd aria-hidden="true" />
+                 Deposit
               </Link>
 
               <Link to="/profile" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                👤 Profile
+                <GoPerson aria-hidden="true" /> Profile
               </Link>
 
               <button
@@ -154,7 +157,7 @@ export default function DashboardPage() {
             <div className="account-left">
               <div className="avatar-big">RB</div>
               <div className="greetings">
-                <div className="greet-line">Good day</div>
+                <div className="greet-line">Good Day!</div>
                 <div className="username">Roberto</div>
               </div>
             </div>
