@@ -446,8 +446,8 @@ export default function DashboardPage() {
         padding-right:10px;
         padding-top:20px;
         padding-bottom:20px;
-        margin-right:20px;
-        margin-left:20px;
+        margin-right:15px;
+        margin-left:15px;
         }
         .tile{padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:92px;box-shadow:0 6px 18px rgba(12,22,36,0.04)}
         .tile .tile-icon{font-size:20px}
@@ -461,8 +461,8 @@ export default function DashboardPage() {
         background:rgba(255, 255, 255, 1);
         border-radius:10px;
         padding-bottom:10px;
-        margin-right:20px;
-        margin-left:20px;
+        margin-right:15px;
+        margin-left:15px;
         padding-right:50px;
         padding-left:50px;}
         /* spacing between stacked card elements (keeps original color & radius) */
@@ -486,8 +486,8 @@ export default function DashboardPage() {
         /* Transactions */
         .recent-section {
          background: #fff;
-         margin-left:20px;
-         margin-right:20px;
+         margin-left:15px;
+         margin-right:15px;
          padding-left:20px;
          padding-right:20px;
          padding-top:10px;
