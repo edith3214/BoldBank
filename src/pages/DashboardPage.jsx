@@ -244,7 +244,7 @@ export default function DashboardPage() {
           <div className="visa-card p-3">
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <div className="card-small">Bold Trust Bank</div>
+                <div className="card-small">Trust Bank</div>
                 <div className="card-title">VIRTUAL BANKING</div>
               </div>
               <div className="card-right text-end">
@@ -262,7 +262,7 @@ export default function DashboardPage() {
           <div className="visa-card p-3">
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <div className="card-small">Bold Trust Bank</div>
+                <div className="card-small">Trust Bank</div>
                 <div className="card-title">VIRTUAL BANKING</div>
               </div>
               <div className="card-right text-end">
@@ -270,7 +270,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="card-number">•••• •••• •••• 9874</div>
+            <div className="card-number">•••• •••• •••• 5697</div>
             <div className="d-flex justify-content-between mt-2 card-meta">
               <div>Card Holder</div>
               <div>Valid Thru</div>
