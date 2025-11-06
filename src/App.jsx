@@ -12,6 +12,7 @@ import TransferPage from "./pages/TransferPage";
 import DepositPage from "./pages/DepositPage"; // added
 import TransactionHistory from "./pages/HistoryPage";
 import ChatPage from "./pages/ChatPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function PrivateRoute({ children, allowedRole }) {
   const { user, loading } = useAuth();
@@ -70,6 +71,15 @@ export default function App() {
           element={
             <PrivateRoute allowedRole="admin">
               <AdminPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute allowedRole="user">
+              <ProfilePage />
             </PrivateRoute>
           }
         />

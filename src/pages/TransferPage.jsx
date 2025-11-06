@@ -44,7 +44,7 @@ export default function TransferPage() {
       if (match?.status === "Completed" && status === "pending") {
         setStatus("success");
       } else if (match?.status === "Declined") {
-        alert("❌ Your transaction was declined by admin.");
+        alert("❌ Your transaction was declined.");
         navigate("/error");
         setStatus("idle");
       }
@@ -98,7 +98,7 @@ export default function TransferPage() {
                       setLatestTx(newTx);
                       setStatus("pending");
                       setAmount("");
-                      alert("Transfer submitted for admin approval.");
+                      alert("Transfer pending.");
                       e.target.reset();
                     } catch (err) {
                       console.error("Transfer failed", err);

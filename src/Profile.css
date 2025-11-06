@@ -1,0 +1,195 @@
+/* Import fonts (put these in index.html for better performance or keep here) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+/* Basic font */
+.userprofile-root {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background-color: var(--bg, #ffffff);
+  color: var(--text, #333333);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+main.flex-grow-1 {
+  flex: 1 1 auto;
+  min-height: 0; /* allow overflow to work inside flex item */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Site title */
+.site-title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: -0.015em;
+  color: #003366;
+  margin: 0;
+}
+
+/* top nav colors & links */
+.nav-link-like {
+  color: #333333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.nav-link-like:hover {
+  color: #003366;
+}
+.nav-link-active {
+  color: #003366;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-bottom: 2px solid #003366;
+  padding-bottom: .35rem;
+  text-decoration: none;
+}
+
+/* icon buttons */
+.icon-btn {
+  background-color: rgba(0,51,102,0.06);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* avatar sizes */
+.avatar-lg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+}
+
+/* profile avatar */
+.profile-avatar-xl {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+}
+
+/* names & account */
+.display-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: #111827;
+}
+.account-info {
+  color: #6b7280;
+  margin: 0;
+}
+
+/* accordions */
+.accordions .accordion-item {
+  border-top: 1px solid #E0E0E0;
+  margin: 0;
+   overflow: visible;
+}
+.accordion-summary {
+  cursor: pointer;
+  transition: background-color .15s;
+}
+.accordion-summary:hover {
+  background-color: #f8fafc; /* subtle hover color */
+}
+.accordion-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* icon circle used in rows */
+.icon-circle {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  background-color: rgba(0,51,102,0.06);
+  color: #003366;
+}
+
+/* info rows */
+.info-row .muted-label {
+  color: #6b7280;
+  font-size: .75rem;
+  margin-bottom: 2px;
+}
+.info-row .info-value {
+  color: #111827;
+  font-size: .95rem;
+  font-weight: 500;
+}
+
+.container-fluid.p-0 {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0; /* allow children to scroll */
+}
+
+/* buttons bottom */
+.cancel-btn {
+  background-color: #E5E7EB;
+  color: #111827;
+  border-radius: .5rem;
+  padding: .5rem 1.25rem;
+  border: none;
+  font-weight: 700;
+}
+.cancel-btn:hover {
+  background-color: #ddd;
+}
+.save-btn {
+  background-color: #003366;
+  color: #ffffff;
+  border-radius: .5rem;
+  padding: .5rem 1.25rem;
+  border: none;
+  font-weight: 700;
+}
+.save-btn:hover {
+  background-color: #002a52;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+
+/* subtle borders used in details rows */
+.info-row {
+  min-height: 56px;
+}
+
+/* material icons (make sure the font link is loaded in index.html) */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+}
+
+/* responsive tweaks to mimic the original breakpoints */
+@media (min-width: 992px) {
+  .profile-avatar-xl { width: 128px; height: 128px; }
+  .display-name { font-size: 2rem; }
+}
+
+/* dark mode overrides - if you want to support dark in the future, toggle a .dark-mode class on body */
+.userprofile-root.dark-mode {
+  --bg: #111921;
+  --text: #f1f1f1;
+}

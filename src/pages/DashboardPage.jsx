@@ -40,19 +40,102 @@ export default function DashboardPage() {
   // add showMenu state
   const [showMenu, setShowMenu] = useState(false);
 
+  // drawer state for accessible side navigation
+  const [showDrawer, setShowDrawer] = useState(false);
+
+  // handle Esc to close & prevent background scroll when drawer open
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") setShowDrawer(false);
+    }
+    if (showDrawer) {
+      document.addEventListener("keydown", onKey);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [showDrawer]);
+
   return (
     <div className="dashboard-page">
       <header className="topbar">
-        <button className="hamburger" aria-label="menu"><RxHamburgerMenu /></button>
+        <button
+          className="hamburger"
+          aria-label="open drawer"
+          onClick={() => setShowDrawer(true)}
+        >
+          <RxHamburgerMenu />
+        </button>
         <div className="brand"> 
           <div className="brand-icon"></div>
           <div className="brand-text">TRUST BANK</div>
         </div>
         <div className="top-actions">
-        <button className="bell" aria-label="notifications"><IoMdNotificationsOutline /><span className="dot"/></button>
-          <div className="avatar">RB</div>
+          <button className="bell" aria-label="notifications"><IoMdNotificationsOutline /><span className="dot"/></button>
+          <Link to="/profile" className="avatar" aria-label="Profile">RB</Link>
         </div>
       </header>
+
+      {/* Drawer overlay + sliding panel */}
+      {showDrawer && (
+        <>
+          <div
+            className="drawer-overlay"
+            onClick={() => setShowDrawer(false)}
+            aria-hidden="true"
+          />
+          <aside
+            className="drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation drawer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="drawer-header">
+              <div>
+                <div className="drawer-name">Roberto</div>
+                <div className="drawer-acct">Acct • 77990250980</div>
+              </div>
+              <button
+                className="drawer-close"
+                aria-label="Close drawer"
+                onClick={() => setShowDrawer(false)}
+              >
+                <IoMdClose />
+              </button>
+            </div>
+
+            <nav className="drawer-nav" aria-label="Main">
+              <Link to="/transfer" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                💸 Transfer
+              </Link>
+
+              <Link to="/history" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                🧾 History
+              </Link>
+
+              <Link to="/deposit" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                💰 Deposit
+              </Link>
+
+              <Link to="/profile" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                👤 Profile
+              </Link>
+
+              <button
+                className="drawer-link drawer-logout"
+                onClick={() => { logout(); setShowDrawer(false); }}
+              >
+                🚪 Logout
+              </button>
+            </nav>
+          </aside>
+        </>
+      )}
 
       <main className="content">
         {/* === 1. BALANCE SECTION === */}
@@ -520,6 +603,93 @@ export default function DashboardPage() {
           transform: scale(1.04);
         }
           
+        .drawer-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(2,6,23,0.45);
+          backdrop-filter: blur(4px);
+          z-index: 1000;
+        }
+
+        .drawer {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: min(84vw, 360px);
+          max-width: 420px;
+          background: #fff;
+          box-shadow: 0 16px 48px rgba(2,6,23,0.24);
+          z-index: 1001;
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          transform: translateX(-6%);
+          animation: drawerIn 220ms cubic-bezier(.2,.9,.3,1) both;
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
+        }
+
+        @keyframes drawerIn {
+          from { transform: translateX(-18%); opacity: 0; }
+          to   { transform: translateX(0); opacity: 1; }
+        }
+
+        .drawer-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .drawer-name {
+          font-weight: 700;
+          font-size: 16px;
+        }
+
+        .drawer-acct {
+          font-size: 13px;
+          color: #475569;
+          opacity: 0.9;
+        }
+
+        .drawer-close {
+          background: transparent;
+          border: none;
+          font-size: 20px;
+        }
+
+        .drawer-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 8px;
+        }
+
+        .drawer-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          background: linear-gradient(180deg,#f8fafc,#ffffff);
+          text-decoration: none;
+          color: #0b1220;
+          font-weight: 600;
+          border: 1px solid rgba(2,6,23,0.04);
+        }
+
+        .drawer-link:hover {
+          transform: translateX(4px);
+        }
+
+        .drawer-logout {
+          background: #fff4f4;
+          color: #9b1c1c;
+          border: 1px solid rgba(255,0,0,0.06);
+          margin-top: 8px;
+        }
 
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.95); }
