@@ -112,7 +112,7 @@ export default function TransferPage() {
                       // reset form fields
                       setAmount("");
                       setRecipientName("");
-                      alert("Transfer pending.");
+                     // alert("Transfer pending.");
                       e.target.reset();
                     } catch (err) {
                       console.error("Transfer failed", err);
@@ -262,7 +262,7 @@ export default function TransferPage() {
                     <strong>
                       ${pendingAmount ? Number(pendingAmount).toFixed(2) : "0.00"}
                     </strong>{" "}
-                    to <strong>{pendingRecipient || "the recipient"}</strong> is pending admin approval.
+                    to <strong>{pendingRecipient || "the recipient"}</strong> is pending .
                   </p>
                 </div>
               )}
