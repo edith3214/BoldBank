@@ -217,10 +217,10 @@ export default function DashboardPage() {
           </section>
 
           <section className="actions-grid">
-            <div className="tile gray">
+            <Link to="/account" className="tile gray" aria-label="Account Info">
               <div className="tile-icon"><FaRegBuilding /></div>
               <div className="tile-text">Account Info</div>
-            </div>
+            </Link>
             <Link to="/transfer" className="tile blue" aria-label="Send Money">
               <div className="tile-icon"><IoPaperPlaneOutline /></div>
               <div className="tile-text">Send Money</div>

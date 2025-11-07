@@ -13,6 +13,7 @@ import DepositPage from "./pages/DepositPage"; // added
 import TransactionHistory from "./pages/HistoryPage";
 import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
+import AccountInfo from "./pages/AccountInfo";
 
 function PrivateRoute({ children, allowedRole }) {
   const { user, loading } = useAuth();
@@ -44,6 +45,15 @@ export default function App() {
           element={
             <PrivateRoute allowedRole="user">
               <TransferPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/account"
+          element={
+            <PrivateRoute allowedRole="user">
+              <AccountInfo />
             </PrivateRoute>
           }
         />
