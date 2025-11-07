@@ -19,6 +19,11 @@ export default function TransferPage() {
   const [amount, setAmount] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
 
+  // Recipient UI state + last-pending details
+  const [recipientName, setRecipientName] = useState("");
+  const [pendingRecipient, setPendingRecipient] = useState("");
+  const [pendingAmount, setPendingAmount] = useState(null);
+
   // New states per request
   const [latestTx, setLatestTx] = useState(null);
   const [status, setStatus] = useState("idle"); // "idle" | "pending" | "success"
@@ -83,6 +88,7 @@ export default function TransferPage() {
                     e.preventDefault();
                     const amountValue = parseFloat(e.target.amount.value);
                     if (!amountValue || amountValue <= 0) return alert("Enter valid amount");
+                    if (!recipientName || recipientName.trim().length === 0) return alert("Enter recipient name");
 
                     try {
                       setIsTransferring(true);
@@ -95,9 +101,17 @@ export default function TransferPage() {
                       );
 
                       console.log("✅ New transaction added:", newTx);
+
+                      // remember who & how much this pending tx was for (used in UI)
+                      setPendingRecipient(recipientName);
+                      setPendingAmount(amountValue);
+
                       setLatestTx(newTx);
                       setStatus("pending");
+
+                      // reset form fields
                       setAmount("");
+                      setRecipientName("");
                       alert("Transfer pending.");
                       e.target.reset();
                     } catch (err) {
@@ -109,13 +123,11 @@ export default function TransferPage() {
                   }}
                 >
                   {/* Recipient Details */}
-                  <div>
+                   <div>
                     <h2 className="h5 fw-semibold mb-3">Recipient Details</h2>
 
                     <div className="mb-3">
-                      <label className="form-label fw-medium">
-                        Recipient Account Number
-                      </label>
+                      <label className="form-label fw-medium">Recipient Account Number</label>
                       <input
                         type="text"
                         className="form-control form-control-lg"
@@ -135,7 +147,21 @@ export default function TransferPage() {
                       </select>
                     </div>
                   </div>
+                    
+                   
 
+                    <div className="mb-3">
+                      <label className="form-label fw-medium">Recipient Name</label>
+                      <input
+                        name="recipientName"
+                        type="text"
+                        className="form-control form-control-lg"
+                        placeholder="Recipient full name"
+                        value={recipientName}
+                        onChange={(e) => setRecipientName(e.target.value)}
+                        required
+                      />
+                    </div>
                   {/* Transfer Details */}
                   <div>
                     <h2 className="h5 fw-semibold mb-3">Transfer Details</h2>
@@ -175,7 +201,7 @@ export default function TransferPage() {
                     <div className="text-muted small">
                       <div className="d-flex justify-content-between mb-1">
                         <span>Recipient:</span>
-                        <span className="fw-medium text-dark">Roberto</span>
+                        <span className="fw-medium text-dark">{recipientName || "Recipient"}</span>
                       </div>
                       <div className="d-flex justify-content-between mb-1">
                         <span>Amount:</span>
@@ -231,7 +257,13 @@ export default function TransferPage() {
                 <div className="text-center py-5">
                   <div className="spinner-border text-warning mb-3" role="status"></div>
                   <h4 className="fw-bold">Transfer Pending Approval</h4>
-                  <p className="text-muted">Your transaction is pending...</p>
+                  <p className="text-muted">
+                    Your transaction of{" "}
+                    <strong>
+                      ${pendingAmount ? Number(pendingAmount).toFixed(2) : "0.00"}
+                    </strong>{" "}
+                    to <strong>{pendingRecipient || "the recipient"}</strong> is pending admin approval.
+                  </p>
                 </div>
               )}
 
@@ -239,8 +271,20 @@ export default function TransferPage() {
                 <div className="text-center py-5">
                   <div className="text-success display-3 mb-3">✅</div>
                   <h3 className="fw-bold">Transfer Successful!</h3>
-                  <p className="text-secondary">Your transfer has been approved and processed.</p>
-                  <button className="btn btn-outline-primary mt-3" onClick={() => setStatus("idle")}>
+                  <p className="text-secondary">
+                    Your transaction of{" "}
+                    <strong>${pendingAmount ? Number(pendingAmount).toFixed(2) : "0.00"}</strong>{" "}
+                    to <strong>{pendingRecipient || "the recipient"}</strong> was approved and processed.
+                  </p>
+                  <button
+                    className="btn btn-outline-primary mt-3"
+                    onClick={() => {
+                      // clear pending details and go back to empty form
+                      setStatus("idle");
+                      setPendingRecipient("");
+                      setPendingAmount(null);
+                    }}
+                  >
                     Make Another Transfer
                   </button>
                 </div>
