@@ -308,8 +308,8 @@ export default function DashboardPage() {
       </main>
 
       <nav className="bottom-nav">
-        <button className="nav-item" aria-label="home"><FiHome /></button>
-        <button className="nav-item" aria-label="stats"><IoStatsChartOutline /></button>
+        <Link to="/dashboard" className="nav-item" aria-label="home"><FiHome /></Link>
+        <Link to="/account" className="nav-item" aria-label="account"><IoStatsChartOutline /></Link>
         <div className="nav-center">
           <button
             className="grid-btn"
@@ -319,8 +319,9 @@ export default function DashboardPage() {
             <IoGridOutline />
           </button>
         </div>
-        <button className="nav-item" aria-label="cards"><CiCreditCard1 /></button>
-        <button className="nav-item" aria-label="profile"><GoPerson /></button>
+        <Link to="/deposit" className="nav-item" aria-label="home"><CiCreditCard1 /></Link>
+        <Link to="/profile" className="nav-item" aria-label="profile"><GoPerson /></Link>
+        
       </nav>
 
       {showMenu && (
