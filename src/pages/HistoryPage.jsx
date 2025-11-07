@@ -18,7 +18,7 @@ export default function TransactionHistory() {
               />
             </svg>
           </div>
-          <h2 className="fs-5 fw-bold mb-0">BOLD TRUST BANK</h2>
+          <h2 className="fs-5 fw-bold mb-0">TRUST BANK</h2>
         </div>
 
         <div className="d-flex align-items-center gap-3">
