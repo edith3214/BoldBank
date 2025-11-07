@@ -231,7 +231,7 @@ export default function TransferPage() {
                 <div className="text-center py-5">
                   <div className="spinner-border text-warning mb-3" role="status"></div>
                   <h4 className="fw-bold">Transfer Pending Approval</h4>
-                  <p className="text-muted">Your transaction is awaiting admin approval...</p>
+                  <p className="text-muted">Your transaction is pending...</p>
                 </div>
               )}
 
