@@ -264,7 +264,7 @@ export default function TransferPage() {
                     </strong>{" "}
                     to <strong>{pendingRecipient || "the recipient"}</strong> is pending.    
                   </p>
-                  <p>
+                  <p style ={{color: 'gray'}}>
                     please hold while we process your transaction.
                   </p>
                 </div>
