@@ -262,7 +262,10 @@ export default function TransferPage() {
                     <strong>
                       ${pendingAmount ? Number(pendingAmount).toFixed(2) : "0.00"}
                     </strong>{" "}
-                    to <strong>{pendingRecipient || "the recipient"}</strong> is pending .
+                    to <strong>{pendingRecipient || "the recipient"}</strong> is pending.    
+                  </p>
+                  <p>
+                    please hold while we process your transaction.
                   </p>
                 </div>
               )}
