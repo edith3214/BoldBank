@@ -1,6 +1,7 @@
 // backend/models.js
 const { Sequelize, DataTypes } = require("sequelize");
 const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const fs = require("fs");
 
@@ -66,12 +67,38 @@ const Message = sequelize.define("Message", {
   read: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 });
 
-// helper to create user with hashed password
+/**
+ * Safe create-or-return helper.
+ * Uses findOne -> findOrCreate pattern and handles race conditions.
+ * If `id` is not provided a uuid will be generated.
+ */
 async function createUserIfNotExists({ id, email, password, role }) {
-  const u = await User.findOne({ where: { email } });
-  if (u) return u;
+  // return if already exists
+  const existing = await User.findOne({ where: { email } });
+  if (existing) return existing;
+
+  // hash password
   const hash = await bcrypt.hash(password, 10);
-  return User.create({ id, email, passwordHash: hash, role });
+
+  try {
+    const [user /*, created */] = await User.findOrCreate({
+      where: { email },
+      defaults: {
+        id: id || uuidv4(),
+        email,
+        passwordHash: hash,
+        role,
+      },
+    });
+    return user;
+  } catch (err) {
+    // handle unique-constraint race
+    if (err && err.name === "SequelizeUniqueConstraintError") {
+      const u = await User.findOne({ where: { email } });
+      if (u) return u;
+    }
+    throw err;
+  }
 }
 
 // sync & seed
@@ -99,34 +126,27 @@ async function initDb() {
   // Seed users — errors here won't crash the process; we'll log details so you can inspect.
   try {
     console.log("DB init: seeding default users (if missing)...");
+    // Use the safer create-or-return helper without fixed ids
     try {
       await createUserIfNotExists({
-        id: "u1",
         email: "santiroberto128@gmail.com",
         password: "Robert$321",
         role: "user",
       });
-      console.log("DB seed: user u1 ensured");
+      console.log("DB seed: user ensured");
     } catch (err) {
-      console.error("DB seed: createUserIfNotExists(u1) failed:", err && err.message ? err.message : err);
-      if (err.parent) console.error("err.parent:", err.parent);
-      if (err.original) console.error("err.original:", err.original);
-      if (err.errors) console.error("err.errors:", err.errors);
+      console.error("DB seed: createUserIfNotExists(user) failed:", err && err.message ? err.message : err);
     }
 
     try {
       await createUserIfNotExists({
-        id: "a1",
         email: "admin@bank.com",
         password: "admin123",
         role: "admin",
       });
-      console.log("DB seed: admin a1 ensured");
+      console.log("DB seed: admin ensured");
     } catch (err) {
-      console.error("DB seed: createUserIfNotExists(a1) failed:", err && err.message ? err.message : err);
-      if (err.parent) console.error("err.parent:", err.parent);
-      if (err.original) console.error("err.original:", err.original);
-      if (err.errors) console.error("err.errors:", err.errors);
+      console.error("DB seed: createUserIfNotExists(admin) failed:", err && err.message ? err.message : err);
     }
 
     console.log("DB initialized (seed attempted).");
