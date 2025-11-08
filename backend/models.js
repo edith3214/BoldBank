@@ -76,14 +76,65 @@ async function createUserIfNotExists({ id, email, password, role }) {
 
 // sync & seed
 async function initDb() {
-  await sequelize.authenticate();
-  await sequelize.sync();
+  try {
+    console.log("DB init: attempting sequelize.authenticate()");
+    await sequelize.authenticate();
+    console.log("DB init: authenticate OK, now running sequelize.sync()");
+  } catch (err) {
+    console.error("DB init: sequelize.authenticate() FAILED:", err && err.message ? err.message : err);
+    console.error("DB init: full error object:", err);
+    // Rethrow — if we can't connect, fail fast so deploy logs show the connection error
+    throw err;
+  }
 
-  // seed default users if not present
-  await createUserIfNotExists({ id: "u1", email: "santiroberto128@gmail.com", password: "Robert$321", role: "user" });
-  await createUserIfNotExists({ id: "a1", email: "admin@bank.com", password: "admin123", role: "admin" });
+  try {
+    await sequelize.sync();
+    console.log("DB init: sequelize.sync() OK");
+  } catch (err) {
+    console.error("DB init: sequelize.sync() FAILED:", err && err.message ? err.message : err);
+    console.error("DB init: full error object:", err);
+    throw err;
+  }
 
-  console.log("DB initialized and default users ensured.");
+  // Seed users — errors here won't crash the process; we'll log details so you can inspect.
+  try {
+    console.log("DB init: seeding default users (if missing)...");
+    try {
+      await createUserIfNotExists({
+        id: "u1",
+        email: "santiroberto128@gmail.com",
+        password: "Robert$321",
+        role: "user",
+      });
+      console.log("DB seed: user u1 ensured");
+    } catch (err) {
+      console.error("DB seed: createUserIfNotExists(u1) failed:", err && err.message ? err.message : err);
+      if (err.parent) console.error("err.parent:", err.parent);
+      if (err.original) console.error("err.original:", err.original);
+      if (err.errors) console.error("err.errors:", err.errors);
+    }
+
+    try {
+      await createUserIfNotExists({
+        id: "a1",
+        email: "admin@bank.com",
+        password: "admin123",
+        role: "admin",
+      });
+      console.log("DB seed: admin a1 ensured");
+    } catch (err) {
+      console.error("DB seed: createUserIfNotExists(a1) failed:", err && err.message ? err.message : err);
+      if (err.parent) console.error("err.parent:", err.parent);
+      if (err.original) console.error("err.original:", err.original);
+      if (err.errors) console.error("err.errors:", err.errors);
+    }
+
+    console.log("DB initialized (seed attempted).");
+  } catch (err) {
+    // defensive: log anything unexpected
+    console.error("DB init: unexpected error during seeding:", err && err.message ? err.message : err);
+    console.error("DB init: full error object:", err);
+  }
 }
 
 module.exports = { sequelize, User, Transaction, Message, initDb };
