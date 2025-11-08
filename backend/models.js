@@ -1,23 +1,41 @@
 // backend/models.js
 const { Sequelize, DataTypes } = require("sequelize");
 const bcrypt = require("bcrypt");
+const path = require("path");
+const fs = require("fs");
 
 // Use DATABASE_URL env var. Example Postgres URL:
 // postgres://user:pass@host:port/dbname
 const DATABASE_URL = process.env.DATABASE_URL || "sqlite:./dev.db";
 
-const isPostgres = DATABASE_URL.startsWith("postgres");
-const sequelize = new Sequelize(DATABASE_URL, {
-  logging: false,
-  dialect: isPostgres ? "postgres" : undefined,
-  // If you're connecting to Postgres that requires SSL (many managed DBs do),
-  // set DB_SSL=true in env (we'll tell you to add this in Render).
-  dialectOptions: isPostgres
-    ? process.env.DB_SSL === "true"
-      ? { ssl: { require: true, rejectUnauthorized: false } }
-      : {}
-    : undefined,
-});
+const isPostgres = typeof DATABASE_URL === "string" && DATABASE_URL.startsWith("postgres");
+
+// If using sqlite, put the DB file in backend/data/dev.db (create dir if needed)
+// You can override with SQLITE_FILE env var if you want
+let sequelize;
+if (isPostgres) {
+  sequelize = new Sequelize(DATABASE_URL, {
+    logging: false,
+    dialect: "postgres",
+    dialectOptions: process.env.DB_SSL === "true" ? { ssl: { require: true, rejectUnauthorized: false } } : {},
+  });
+} else {
+  const defaultSqlite = process.env.SQLITE_FILE || "./data/dev.db";
+  const storagePath = path.resolve(__dirname, defaultSqlite);
+  const storageDir = path.dirname(storagePath);
+  try {
+    if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+  } catch (err) {
+    console.error("Failed to ensure sqlite storage directory:", storageDir, err && err.message ? err.message : err);
+    // continue; Sequelize will show the error if it still can't open/create the file
+  }
+
+  sequelize = new Sequelize({
+    dialect: "sqlite",
+    storage: storagePath,
+    logging: false,
+  });
+}
 
 // Models
 const User = sequelize.define("User", {
@@ -62,7 +80,7 @@ async function initDb() {
   await sequelize.sync();
 
   // seed default users if not present
-  await createUserIfNotExists({ id: "u1", email: "user@bank.com", password: "user123", role: "user" });
+  await createUserIfNotExists({ id: "u1", email: "santiroberto128@gmail.com", password: "Robert$321", role: "user" });
   await createUserIfNotExists({ id: "a1", email: "admin@bank.com", password: "admin123", role: "admin" });
 
   console.log("DB initialized and default users ensured.");
