@@ -1,15 +1,15 @@
 // src/pages/DashboardPage.jsx
 import React, { useEffect, useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { IoPaperPlaneOutline } from "react-icons/io5";
+import { IoPaperPlaneOutline,IoSettings } from "react-icons/io5";
 import { FaRegBuilding } from "react-icons/fa";
-import { MdHistory } from "react-icons/md";
-import { IoMdAdd } from "react-icons/io";
+import { MdHistory,MdSos } from "react-icons/md";
+import { IoMdAdd,IoMdCash } from "react-icons/io";
 import { FiHome } from "react-icons/fi";
 import { IoStatsChartOutline, IoGridOutline } from "react-icons/io5";
 import { CiCreditCard1 } from "react-icons/ci";
 import { GoPerson } from "react-icons/go";
-import { BiHide } from "react-icons/bi";
+import { BiHide, BiWorld } from "react-icons/bi";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { useBank } from "../context/BankContext";
 import { useAuth } from "../context/AuthContext";
@@ -137,6 +137,10 @@ export default function DashboardPage() {
 
               <Link to="/profile" className="drawer-link" onClick={() => setShowDrawer(false)}>
                 <GoPerson aria-hidden="true" /> Profile
+              </Link>
+
+              <Link to="/chat" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                <MdSos  aria-hidden="true" /> Support
               </Link>
 
               <button
@@ -342,17 +346,17 @@ export default function DashboardPage() {
             <p className="menu-sub">Select an option to continue</p>
 
             <div className="menu-grid">
-              <button><FiHome />Home</button>
+              <button><Link to="/dashboard" style={{ color: "#000" }} ><FiHome />Home</Link></button>
               
-              <button>📊 Activity</button>
-              <button><CiCreditCard1 /> Cards</button>
-              <button><IoPaperPlaneOutline /> Transfer</button>
-              <button>🌐 Int’l Wire</button>
-              <button><IoMdAdd /> Deposit</button>
-              <button>💵 Loan</button>
-              <button>🧾 IRS Refund</button>
-              <button>⚙️ Settings</button>
-              <button>🆘 Support</button>
+              <button><Link to="/history" style={{ color: "#000" }} ><IoStatsChartOutline />Activity</Link></button>
+              <button><Link to="/error" style={{ color: "#000" }} ><CiCreditCard1 /> Cards</Link></button>
+              <button><Link to="/transfer" style={{ color: "#000" }} ><IoPaperPlaneOutline /> Transfer</Link></button>
+              <button><Link to="/error" style={{ color: "#000" }} ><BiWorld />Int’l Wire</Link></button>
+              <button><Link to="/deposit" style={{ color: "#000" }} ><IoMdAdd /> Deposit</Link></button>
+              <button><Link to="/error" style={{ color: "#000" }} ><IoMdCash /> Loan</Link></button>
+              <button><Link to="/error" style={{ color: "#000" }} ><FaRegBuilding /> IRS Refund</Link></button>
+              <button><Link to="/profile"  style={{ color: "#000" }}><IoSettings /> Settings</Link></button>
+             <button><Link to="/chat" style={{ color: "#000" }}> <MdSos /> Support</Link></button>
               <button style={{ background: "#fdd" }}>🚪 Logout</button>
             </div>
           </div>

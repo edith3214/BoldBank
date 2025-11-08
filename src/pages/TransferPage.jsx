@@ -301,7 +301,7 @@ export default function TransferPage() {
             <span className="material-symbols-outlined fs-5"></span>
             <p ></p>
             <p className="mb-0">
-              Note:you chosen not to use a pin for transaction to secure your account it is recommended to enable it for added security.
+              Note:you've chosen not to use a pin for transaction to secure your account it is recommended to enable it for added security.
               For your security, never share your password or OTP with anyone.
             </p>
           </div>
