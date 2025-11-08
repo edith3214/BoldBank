@@ -1,0 +1,89 @@
+/* Fonts & icons (recommended in public/index.html):
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+*/
+
+:root{
+  --primary: #3A86FF;
+  --bg-light: #f6f7f8;
+  --bg-dark: #121826;
+  --text-light: #111827;
+  --muted: #9CA3AF;
+}
+
+/* base */
+.error-root {
+  font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  min-height: 100vh;
+}
+
+/* dark-mode utility: add .dark on html or body to enable */
+html.dark .error-root,
+.error-root.dark {
+  background-color: var(--bg-dark);
+  color: #F9FAFB;
+}
+
+/* header */
+header {
+  background: transparent;
+  border-color: rgba(255,255,255,0.08);
+}
+.logo-box svg { display: block; }
+
+/* illustration */
+.error-illustration {
+  max-width: 320px;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* title & copy */
+.display-title {
+  font-weight: 700;
+  font-size: 1.375rem; /* ~22px */
+  color: #111827;
+}
+html.dark .display-title { color: #F9FAFB; }
+
+.lead {
+  color: #6b7280;
+}
+html.dark .lead { color: #9CA3AF; }
+
+/* button */
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  filter: brightness(.95);
+}
+
+/* error code */
+.error-code {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+/* spacing helpers to mimic original layout (responsive paddings from HTML) */
+.px-sm-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+@media (min-width: 768px) {
+  .px-md-20 { padding-left: 5rem; padding-right: 5rem; }
+}
+@media (min-width: 992px) {
+  .px-lg-40 { padding-left: 10rem; padding-right: 10rem; }
+}
+
+/* ensure center area fits similarly to original */
+@media (min-width: 576px) {
+  .error-root .text-center { padding-top: 3rem; padding-bottom: 3rem; }
+}
+@media (min-width: 768px) {
+  .error-root .text-center { padding-top: 6rem; padding-bottom: 6rem; }
+}

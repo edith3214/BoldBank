@@ -14,6 +14,7 @@ import TransactionHistory from "./pages/HistoryPage";
 import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import AccountInfo from "./pages/AccountInfo";
+import Error from "./pages/Error";
 
 function PrivateRoute({ children, allowedRole }) {
   const { user, loading } = useAuth();
@@ -72,6 +73,15 @@ export default function App() {
           element={
             <PrivateRoute allowedRole="user">
               <TransactionHistory />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/errorp"
+          element={
+            <PrivateRoute allowedRole="user">
+              <Error />
             </PrivateRoute>
           }
         />

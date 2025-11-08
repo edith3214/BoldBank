@@ -93,8 +93,8 @@ export default function ChatPage() {
   return (
     <div className="container py-4" style={{ maxWidth: 800 }}>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0">Chat with {other}</h4>
-        <div className="small text-muted">Signed in as {user?.email}</div>
+        <h4 className="mb-0">Chat with Trust Support</h4>
+        <div className="small text-muted">Signed in </div>
       </div>
 
       <div
@@ -121,7 +121,7 @@ export default function ChatPage() {
       <form onSubmit={handleSend} className="d-flex gap-2">
         <input
           className="form-control"
-          placeholder={`Message trust support ${other}`}
+          placeholder={`Message trust support `}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

@@ -349,12 +349,12 @@ export default function DashboardPage() {
               <button><Link to="/dashboard" style={{ color: "#000" }} ><FiHome />Home</Link></button>
               
               <button><Link to="/history" style={{ color: "#000" }} ><IoStatsChartOutline />Activity</Link></button>
-              <button><Link to="/error" style={{ color: "#000" }} ><CiCreditCard1 /> Cards</Link></button>
+              <button><Link to="/errorp" style={{ color: "#000" }} ><CiCreditCard1 /> Cards</Link></button>
               <button><Link to="/transfer" style={{ color: "#000" }} ><IoPaperPlaneOutline /> Transfer</Link></button>
               <button><Link to="/error" style={{ color: "#000" }} ><BiWorld />Int’l Wire</Link></button>
               <button><Link to="/deposit" style={{ color: "#000" }} ><IoMdAdd /> Deposit</Link></button>
-              <button><Link to="/error" style={{ color: "#000" }} ><IoMdCash /> Loan</Link></button>
-              <button><Link to="/error" style={{ color: "#000" }} ><FaRegBuilding /> IRS Refund</Link></button>
+              <button><Link to="/errorp" style={{ color: "#000" }} ><IoMdCash /> Loan</Link></button>
+              <button><Link to="/errorp" style={{ color: "#000" }} ><FaRegBuilding /> IRS Refund</Link></button>
               <button><Link to="/profile"  style={{ color: "#000" }}><IoSettings /> Settings</Link></button>
              <button><Link to="/chat" style={{ color: "#000" }}> <MdSos /> Support</Link></button>
               <button style={{ background: "#fdd" }}>🚪 Logout</button>
