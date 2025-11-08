@@ -13,6 +13,29 @@ export default function ChatPage() {
   // the other participant (admin opens with ?user=user@bank.com, user opens with ?user=admin@bank.com)
   const other = searchParams.get("user") || (user?.role === "user" ? "admin@bank.com" : null);
 
+  // Robustly get a timestamp (ms) for a message and return formatted string.
+  // Handles numeric string createdAtMs, ISO createdAt, and falls back to Date.now().
+  function formatMessageTime(m) {
+    try {
+      // 1) Prefer createdAtMs (may be number or numeric string)
+      if (m?.createdAtMs != null) {
+        const n = Number(m.createdAtMs);
+        if (!Number.isNaN(n) && n > 0) return new Date(n).toLocaleString();
+      }
+
+      // 2) Then try createdAt (ISO string)
+      if (m?.createdAt) {
+        const parsed = Date.parse(m.createdAt);
+        if (!Number.isNaN(parsed) && parsed > 0) return new Date(parsed).toLocaleString();
+      }
+
+      // 3) Fallback to now
+      return new Date().toLocaleString();
+    } catch (e) {
+      return new Date().toLocaleString();
+    }
+  }
+
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const listRef = useRef(null);
@@ -111,7 +134,7 @@ export default function ChatPage() {
                 <div className={`p-2 rounded ${mine ? "bg-primary text-white" : "bg-white border"}`}>
                   <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
                 </div>
-                <div className="small text-muted mt-1">{new Date(m.createdAtMs || m.createdAt || Date.now()).toLocaleString()}</div>
+                <div className="small text-muted mt-1">{formatMessageTime(m)}</div>
               </div>
             </div>
           );
