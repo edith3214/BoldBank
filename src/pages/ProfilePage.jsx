@@ -195,7 +195,7 @@ export default function ProfilePage() {
                         <div className="icon-circle"><span className="material-symbols-outlined">person</span></div>
                         <div>
                           <div className="muted-label">Full Name</div>
-                          <div className="info-value">Roberto</div>
+                          <div className="info-value">{profile?.name}</div>
                         </div>
                       </div>
                       <button className="btn btn-link text-primary">Edit</button>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
                         <div className="icon-circle"><span className="material-symbols-outlined">call</span></div>
                         <div>
                           <div className="muted-label">Contact Number</div>
-                          <div className="info-value">+1 (555) 123-4567</div>
+                          <div className="info-value">{profile?.phone || "+1 (555) 123-4567"}</div>
                         </div>
                       </div>
                       <button className="btn btn-link text-primary">Edit</button>
@@ -228,7 +228,7 @@ export default function ProfilePage() {
                         <div className="icon-circle"><span className="material-symbols-outlined">mail</span></div>
                         <div>
                           <div className="muted-label">Email Address</div>
-                          <div className="info-value">roberto@email.com</div>
+                          <div className="info-value">{profile?.email || "roberto@email.com"}</div>
                         </div>
                       </div>
                       <button className="btn btn-link text-primary">Edit</button>
