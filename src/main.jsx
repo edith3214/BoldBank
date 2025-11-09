@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { AdminControlProvider } from "./context/AdminControlContext";
+import { ProfileProvider } from "./context/ProfileContext"; // <- import
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 
@@ -12,7 +13,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <AuthProvider>
         <AdminControlProvider>
-          <App />
+          <ProfileProvider>
+            <App />
+          </ProfileProvider>
         </AdminControlProvider>
       </AuthProvider>
     </BrowserRouter>

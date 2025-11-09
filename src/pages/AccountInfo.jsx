@@ -1,8 +1,11 @@
+// src/pages/AccountInfo.jsx
 import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../AccountSettings.css";
+import { useProfile } from "../context/ProfileContext";
 
 export default function AccountInfo() {
+  const { profile } = useProfile();
   return (
     <div className="account-page d-flex min-vh-100">
       {/* Sidebar (hidden on small screens like original) */}
@@ -69,13 +72,13 @@ export default function AccountInfo() {
               <div className="card surface p-3 d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center gap-3">
                   <img
-                    src="data:image/png;base64,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"
+                    src={profile?.avatarUrl || "data:image/png;base64,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"}
                     alt="Profile"
                     className="rounded-circle profile-pic"
                   />
                   <div>
-                    <h4 className="mb-1">Roberto</h4>
-                    <p className="muted mb-0">77990250980</p>
+                    <h4 className="mb-1">{profile?.name}</h4>
+                    <p className="muted mb-0">{profile?.accountNumber}</p>
                   </div>
                 </div>
 

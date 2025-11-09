@@ -1,8 +1,34 @@
-import React from "react";
+// src/pages/ProfilePage.jsx
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../Profile.css"; // small stylesheet to restore exact colors/sizes
+import { useProfile } from "../context/ProfileContext";
 
 export default function ProfilePage() {
+  // inside component body
+  const { profile, setProfile } = useProfile();
+  const [form, setForm] = useState(profile);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    setForm(profile);
+  }, [profile]);
+
+  const onSave = () => {
+    // basic validation (expand as needed)
+    if (!form.name || !form.accountNumber) {
+      alert("Please fill name and account number.");
+      return;
+    }
+    setProfile({ ...profile, ...form });
+    setEditing(false);
+  };
+
+  const onCancel = () => {
+    setForm(profile);
+    setEditing(false);
+  };
+
   return (
     <div className="userprofile-root d-flex min-vh-100">
       <div className="container-fluid p-0">
@@ -56,23 +82,100 @@ export default function ProfilePage() {
           >
             <div className="mx-auto" style={{ maxWidth: 1150 }}>
 
-              {/* Profile Header */}
+              {/* Profile Header (replace original static header block) */}
               <div className="d-flex p-3 mb-4 align-items-start">
                 <div className="d-flex w-100 flex-column flex-sm-row justify-content-between align-items-center gap-3">
                   <div className="d-flex align-items-center gap-4">
                     <div
                       className="profile-avatar-xl"
                       role="img"
-                      aria-label="User profile picture for Roberto"
+                      aria-label={`User profile picture for ${form.name}`}
                       style={{
-                        backgroundImage:
-                          'url("data:image/png;base64,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")',
+                        backgroundImage: profile.avatarUrl
+                          ? `url("${profile.avatarUrl}")`
+                          : undefined,
+                        backgroundColor: !profile.avatarUrl ? "#e6eef8" : undefined,
+                        width: 96,
+                        height: 96,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: 28,
+                        color: "#0b1220",
                       }}
-                    />
-                    <div>
-                      <p className="display-name mb-1">Roberto</p>
-                      <p className="account-info mb-0">Account: 77990250980</p>
+                    >
+                      {!profile.avatarUrl && (
+                        <span>
+                          { (form.name || "R").split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase() }
+                        </span>
+                      )}
                     </div>
+
+                    <div>
+                      {!editing ? (
+                        <>
+                          <p className="display-name mb-1">{profile.name}</p>
+                          <p className="account-info mb-0">{profile.accountNumber}</p>
+                        </>
+                      ) : (
+                        <div style={{ minWidth: 260 }}>
+                          <div className="mb-2">
+                            <label className="form-label small mb-1">Full name</label>
+                            <input
+                              className="form-control form-control-sm"
+                              value={form.name}
+                              onChange={(e) => setForm(s => ({ ...s, name: e.target.value }))}
+                            />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="form-label small mb-1">Account number</label>
+                            <input
+                              className="form-control form-control-sm"
+                              value={form.accountNumber}
+                              onChange={(e) => setForm(s => ({ ...s, accountNumber: e.target.value }))}
+                            />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="form-label small mb-1">Phone</label>
+                            <input
+                              className="form-control form-control-sm"
+                              value={form.phone}
+                              onChange={(e) => setForm(s => ({ ...s, phone: e.target.value }))}
+                            />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="form-label small mb-1">Email</label>
+                            <input
+                              className="form-control form-control-sm"
+                              value={form.email}
+                              onChange={(e) => setForm(s => ({ ...s, email: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    {!editing ? (
+                      <button
+                        className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                        onClick={() => setEditing(true)}
+                      >
+                        <span className="material-icons-outlined">edit</span>
+                        Edit
+                      </button>
+                    ) : (
+                      <div className="d-flex gap-2">
+                        <button className="btn btn-primary" onClick={onSave}>Save</button>
+                        <button className="btn btn-outline-secondary" onClick={onCancel}>Cancel</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -221,11 +324,7 @@ export default function ProfilePage() {
 
               </div>
 
-              {/* Actions */}
-              <div className="d-flex justify-content-end gap-3 mt-4">
-                <button className="btn cancel-btn">Cancel</button>
-                <button className="btn save-btn">Save Changes</button>
-              </div>
+              {/* bottom Save/Cancel removed — actions now available in header when editing */}
 
             </div>
           </main>

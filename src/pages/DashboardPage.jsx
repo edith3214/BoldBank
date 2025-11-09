@@ -14,6 +14,7 @@ import { IoMdNotificationsOutline } from "react-icons/io";
 import { useBank } from "../context/BankContext";
 import { useAuth } from "../context/AuthContext";
 import { useAdminControl } from "../context/AdminControlContext";
+import { useProfile } from "../context/ProfileContext";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
@@ -27,6 +28,13 @@ export default function DashboardPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { forcedLogout, declinedTransactionId } = useAdminControl();
+  const { profile } = useProfile();
+  const initials = (profile?.name || "R")
+    .split(" ")
+    .map((s) => s[0] || "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   useEffect(() => {
     if (forcedLogout) {
@@ -86,7 +94,7 @@ export default function DashboardPage() {
         </div>
         <div className="top-actions">
           <button className="bell" aria-label="notifications"><IoMdNotificationsOutline /><span className="dot"/></button>
-          <Link to="/profile" className="avatar" aria-label="Profile">RB</Link>
+          <Link to="/profile" className="avatar" aria-label="Profile">{initials}</Link>
         </div>
       </header>
 
@@ -107,8 +115,8 @@ export default function DashboardPage() {
           >
             <div className="drawer-header">
               <div>
-                <div className="drawer-name">Roberto</div>
-                <div className="drawer-acct">Acct • 77990250980</div>
+                <div className="drawer-name">{profile?.name}</div>
+                <div className="drawer-acct">Acct • {profile?.accountNumber || "—"}</div>
               </div>
               <button
                 className="drawer-close"
@@ -159,10 +167,10 @@ export default function DashboardPage() {
         <div className="dashboard-section balance-section">
           <section className="account-card">
             <div className="account-left">
-              <div className="avatar-big">RB</div>
+              <div className="avatar-big">{initials}</div>
               <div className="greetings">
                 <div className="greet-line">Good Day!</div>
-                <div className="username">Roberto</div>
+                <div className="username">{profile?.name}</div>
               </div>
             </div>
 
@@ -333,8 +341,8 @@ export default function DashboardPage() {
           <div className="menu-container" onClick={(e) => e.stopPropagation()}>
             <div className="menu-header">
               <div>
-                <div className="menu-name">Roberto</div>
-                <div className="menu-acct">Account: 77990250980</div>
+                <div className="menu-name">{profile?.name}</div>
+                <div className="menu-acct">Account: {profile?.accountNumber || "—"}</div>
                 <span className="verified">✔ Verified</span>
               </div>
               <button className="close-btn" onClick={() => setShowMenu(false)}>
