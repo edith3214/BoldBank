@@ -241,7 +241,7 @@ export default function ProfilePage() {
                         <div className="icon-circle"><span className="material-symbols-outlined">cake</span></div>
                         <div>
                           <div className="muted-label">Date of Birth</div>
-                          <div className="info-value">January 1, 1985</div>
+                          <div className="info-value">May 23, 1967</div>
                         </div>
                       </div>
                       <button className="btn btn-link text-primary">Edit</button>

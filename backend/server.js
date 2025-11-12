@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const cookie = require("cookie");
 const { Sequelize } = require("sequelize");
-const { initDb, User, Transaction, Message } = require("./models");
+const { initDb, sequelize, User, Transaction, Message } = require("./models");
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 const PORT = process.env.PORT || 3001;
@@ -188,14 +188,15 @@ app.get("/api/me", async (req, res) => {
   }
 });
 
-// PATCH update profile (name/accountNumber/phone/avatarUrl)
+// PATCH update profile (name/accountNumber/phone/avatarUrl/email)
 // Only authenticated users can update their own profile
 app.patch("/api/profile", async (req, res) => {
   const token = req.cookies?.token;
   const p = verifyToken(token);
   if (!p) return res.status(401).json({ message: "Not authenticated" });
 
-  const allowed = ["name", "accountNumber", "phone", "avatarUrl"];
+  // allow email now as well
+  const allowed = ["name", "accountNumber", "phone", "avatarUrl", "email"];
   const updates = {};
   for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
 
@@ -203,16 +204,77 @@ app.patch("/api/profile", async (req, res) => {
     const user = await User.findByPk(p.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // If email is changing, ensure uniqueness (case-insensitive)
+    if (updates.email && updates.email !== user.email) {
+      const lowerEmail = updates.email.toLowerCase();
+
+      // use the sequelize instance to do a case-insensitive match
+      const existing = await User.findOne({
+        where: sequelize.where(sequelize.fn('lower', sequelize.col('email')), lowerEmail),
+      });
+
+      if (existing && existing.id !== user.id) {
+        return res.status(409).json({ message: "Email already in use" });
+      }
+    }
+
+    // Apply updates
     await user.update(updates);
 
-    // return updated user without passwordHash
-    const returned = await User.findByPk(p.id, { attributes: { exclude: ["passwordHash"] } });
-    // notify sockets if desired:
-    try { emitToUser(user.email, "profile:updated", returned.toJSON ? returned.toJSON() : returned); } catch (_) {}
-    res.json(returned);
+    // Re-fetch returned user without passwordHash
+    const returned = await User.findByPk(user.id, { attributes: { exclude: ["passwordHash"] } });
+
+    // If email changed, refresh cookie JWT to include new email and move socket associations
+    if (updates.email && updates.email !== p.email) {
+      // Re-sign token with updated email and set cookie (same options as /api/login)
+      const newToken = signToken({ id: user.id, email: user.email, role: user.role });
+
+      const cookieOptions = {
+        httpOnly: true,
+        maxAge: 8 * 60 * 60 * 1000, // 8 hours
+        path: "/",
+      };
+      if (process.env.NODE_ENV === "production") {
+        cookieOptions.sameSite = "none";
+        cookieOptions.secure = true;
+      } else {
+        cookieOptions.sameSite = "lax";
+        cookieOptions.secure = false;
+      }
+
+      res.cookie("token", newToken, cookieOptions);
+
+      // Move socket registrations from old email -> new email so real-time still targets the user
+      try {
+        const oldEmail = p.email;
+        const newEmail = user.email;
+        const set = userSockets.get(oldEmail);
+        if (set) {
+          userSockets.delete(oldEmail);
+          const existingSet = userSockets.get(newEmail) || new Set();
+          for (const sid of set) existingSet.add(sid);
+          userSockets.set(newEmail, existingSet);
+        }
+      } catch (e) {
+        console.warn("Failed to migrate user socket registrations after email change:", e);
+      }
+
+      // Emit profile updated event to user's sockets (optional)
+      try {
+        emitToUser(user.email, "profile:updated", returned.toJSON ? returned.toJSON() : returned);
+        emitToUser(p.email, "profile:changed-email", { to: user.email });
+      } catch (e) {
+        /* ignore emit errors */
+      }
+    } else {
+      // normal update notification
+      try { emitToUser(user.email, "profile:updated", returned.toJSON ? returned.toJSON() : returned); } catch (_) {}
+    }
+
+    return res.json(returned);
   } catch (err) {
     console.error("PATCH /api/profile error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
