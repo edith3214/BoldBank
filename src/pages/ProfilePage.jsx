@@ -14,14 +14,49 @@ export default function ProfilePage() {
     setForm(profile);
   }, [profile]);
 
-  const onSave = () => {
-    // basic validation (expand as needed)
+  const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
+
+  const onSave = async () => {
+    // basic validation
     if (!form.name || !form.accountNumber) {
       alert("Please fill name and account number.");
       return;
     }
-    setProfile({ ...profile, ...form });
-    setEditing(false);
+
+    try {
+      const res = await fetch(`${BACKEND}/api/profile`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          accountNumber: form.accountNumber,
+          phone: form.phone,
+          email: form.email, // server may ignore, safe to include
+          avatarUrl: form.avatarUrl,
+        }),
+      });
+
+      if (!res.ok) {
+        // fallback: update local only
+        setProfile((p) => ({ ...p, ...form }));
+        setEditing(false);
+        const errJson = await res.json().catch(() => ({}));
+        alert(errJson.message || "Saved locally (server update failed).");
+        return;
+      }
+
+      const updated = await res.json();
+      // update ProfileContext with authoritative server copy
+      setProfile((p) => ({ ...p, ...updated }));
+      setEditing(false);
+    } catch (err) {
+      console.error("Profile save failed:", err);
+      // fallback: update local only
+      setProfile((p) => ({ ...p, ...form }));
+      setEditing(false);
+      alert("Saved locally (server unreachable).");
+    }
   };
 
   const onCancel = () => {

@@ -44,6 +44,12 @@ const User = sequelize.define("User", {
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   passwordHash: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.STRING, allowNull: false }, // "user" or "admin"
+
+  // NEW profile fields (nullable to avoid migration pains)
+  name: { type: DataTypes.STRING, allowNull: true },
+  accountNumber: { type: DataTypes.STRING, allowNull: true },
+  phone: { type: DataTypes.STRING, allowNull: true },
+  avatarUrl: { type: DataTypes.STRING, allowNull: true },
 });
 
 const Transaction = sequelize.define("Transaction", {
@@ -115,8 +121,9 @@ async function initDb() {
   }
 
   try {
-    await sequelize.sync();
-    console.log("DB init: sequelize.sync() OK");
+    // apply non-destructive schema changes (adds new columns if needed)
+    await sequelize.sync({ alter: true });
+    console.log("DB init: sequelize.sync({ alter: true }) OK");
   } catch (err) {
     console.error("DB init: sequelize.sync() FAILED:", err && err.message ? err.message : err);
     console.error("DB init: full error object:", err);

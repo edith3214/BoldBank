@@ -170,11 +170,50 @@ app.post("/api/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/me", (req, res) => {
+// GET current user and profile
+app.get("/api/me", async (req, res) => {
   const token = req.cookies?.token;
   const p = verifyToken(token);
   if (!p) return res.status(401).json({ message: "Not authenticated" });
-  res.json({ id: p.id, email: p.email, role: p.role });
+
+  try {
+    const user = await User.findByPk(p.id, { attributes: { exclude: ["passwordHash"] } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // return user record (includes name, accountNumber, phone, avatarUrl now)
+    return res.json(user);
+  } catch (err) {
+    console.error("GET /api/me error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH update profile (name/accountNumber/phone/avatarUrl)
+// Only authenticated users can update their own profile
+app.patch("/api/profile", async (req, res) => {
+  const token = req.cookies?.token;
+  const p = verifyToken(token);
+  if (!p) return res.status(401).json({ message: "Not authenticated" });
+
+  const allowed = ["name", "accountNumber", "phone", "avatarUrl"];
+  const updates = {};
+  for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
+
+  try {
+    const user = await User.findByPk(p.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.update(updates);
+
+    // return updated user without passwordHash
+    const returned = await User.findByPk(p.id, { attributes: { exclude: ["passwordHash"] } });
+    // notify sockets if desired:
+    try { emitToUser(user.email, "profile:updated", returned.toJSON ? returned.toJSON() : returned); } catch (_) {}
+    res.json(returned);
+  } catch (err) {
+    console.error("PATCH /api/profile error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // ----- transaction endpoints -----
