@@ -1,7 +1,8 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { socket } from "../lib/socket";
+import { socket, connectSocketWithToken, disconnectSocket } from "../lib/socket";
+import { setToken, getToken } from "../lib/api";
 
 const AuthContext = createContext();
 
@@ -37,7 +38,6 @@ export function AuthProvider({ children }) {
     try {
       const res = await fetch(`${BACKEND}/api/login`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
@@ -45,26 +45,21 @@ export function AuthProvider({ children }) {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.message || "Login failed");
       }
-      const data = await res.json();
+      const body = await res.json(); // { token, user }
 
-      // set user in context
-      setUser(data);
+      setToken(body.token);
+      setUser(body.user);
 
-      // RECONNECT SOCKET so handshake includes new cookie/token
+      // reconnect socket with token
       try {
-        if (socket && socket.connected) {
-          // disconnect existing connection first to ensure server re-handshakes the cookie
-          socket.disconnect();
-        }
-        socket.connect();
+        connectSocketWithToken(body.token);
       } catch (e) {
-        console.warn("Socket reconnect failed:", e);
+        console.warn("Socket connect failed:", e);
       }
 
-      // navigate by role
-      if (data.role === "admin") navigate("/admin", { replace: true });
+      if (body.user.role === "admin") navigate("/admin", { replace: true });
       else navigate("/dashboard", { replace: true });
-      return data;
+      return body.user;
     } catch (err) {
       alert(err.message || "Login error");
       throw err;
@@ -73,15 +68,13 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await fetch(`${BACKEND}/api/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      // If you still call backend logout, you may keep it; not required for token approach
+      await fetch(`${BACKEND}/api/logout`, { method: "POST" }).catch(() => {});
     } catch (e) {
       console.error("Logout error", e);
     } finally {
-      // disconnect socket to clear server-side associations
-      try { if (socket && socket.connected) socket.disconnect(); } catch (e) {}
+      try { disconnectSocket(); } catch (_) {}
+      setToken(null);
       setUser(null);
       if (window.location.pathname !== "/login") navigate("/login", { replace: true });
     }

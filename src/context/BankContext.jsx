@@ -1,6 +1,7 @@
 // src/context/BankContext.jsx
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { socket } from "../lib/socket";
+import { socket, connectSocketWithToken, disconnectSocket } from "../lib/socket";
+import { apiFetch, getToken } from "../lib/api";
 import { useAuth } from "./AuthContext";
 
 const BankContext = createContext();
@@ -15,9 +16,7 @@ export function BankProvider({ children }) {
   // fetch transactions from backend on mount and on user changes
   const fetchTransactions = async () => {
     try {
-      const res = await fetch(`${BACKEND}/api/transactions`, {
-        credentials: "include",
-      });
+      const res = await apiFetch("/api/transactions", { method: "GET" });
       if (!res.ok) throw new Error("Failed to fetch transactions");
       const data = await res.json();
       setTransactions(Array.isArray(data) ? data : []);
@@ -43,12 +42,12 @@ export function BankProvider({ children }) {
     // user is authenticated -> fetch and connect
     fetchTransactions();
 
-    // connect socket (do this *after* cookie exists so handshake includes it)
-    if (!socketConnectedRef.current) {
-      socket.connect();
-      socketConnectedRef.current = true;
-    } else if (!socket.connected) {
-      socket.connect();
+    // connect socket (do this *after* token exists)
+    const token = getToken();
+    try {
+      connectSocketWithToken(token);
+    } catch (e) {
+      console.warn("Socket connect failed:", e);
     }
 
     // connection debug handlers (attach once per effect run)
@@ -130,10 +129,8 @@ export function BankProvider({ children }) {
   // create transaction (POST to backend); returns created tx
   const addTransaction = async (description, type = "Transfer", amount = 0, owner = undefined) => {
     try {
-      const res = await fetch(`${BACKEND}/api/transactions`, {
+      const res = await apiFetch("/api/transactions", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, description }),
       });
       if (!res.ok) throw new Error("Failed to create transaction");
@@ -157,10 +154,7 @@ export function BankProvider({ children }) {
 
   const approveTransaction = async (id) => {
     try {
-      const res = await fetch(`${BACKEND}/api/transactions/${id}/approve`, {
-        method: "PATCH",
-        credentials: "include",
-      });
+      const res = await apiFetch(`/api/transactions/${id}/approve`, { method: "PATCH" });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.message || "Approve failed");
@@ -177,10 +171,8 @@ export function BankProvider({ children }) {
 
   const declineTransaction = async (id, forceLogout = false) => {
     try {
-      const res = await fetch(`${BACKEND}/api/transactions/${id}/decline`, {
+      const res = await apiFetch(`/api/transactions/${id}/decline`, {
         method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ forceLogout }),
       });
       if (!res.ok) {

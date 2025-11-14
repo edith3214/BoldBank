@@ -75,6 +75,19 @@ function verifyToken(token) {
   }
 }
 
+// Add authenticateToken middleware (new)
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const token = tokenFromHeader || req.cookies?.token || null;
+
+  const p = token ? verifyToken(token) : null;
+  if (!p) return res.status(401).json({ message: "Not authenticated" });
+
+  req.user = p;
+  next();
+}
+
 // --- START: improved startup + better logging + DB timeout ---
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION', err && err.stack ? err.stack : err);
@@ -150,51 +163,25 @@ app.post("/api/login", async (req, res) => {
     console.log('[LOGIN] attempt for', email);
 
     if (!email || !password) {
-      console.warn('[LOGIN] missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      console.warn('[LOGIN] user not found for', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const bcrypt = require('bcrypt');
-
     if (!user.passwordHash) {
-      console.error('[LOGIN] user record missing passwordHash for', email);
-      return res.status(500).json({ message: 'Server error: user password not set' });
+      console.error('[LOGIN] user missing passwordHash for', email);
+      return res.status(500).json({ message: 'Server error' });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      console.warn('[LOGIN] invalid password for', email);
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
+    if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
 
     const token = signToken({ id: user.id, email: user.email, role: user.role });
-
-    // cookie options
-    const cookieOptions = {
-      httpOnly: true,
-      maxAge: 8 * 60 * 60 * 1000, // 8 hours
-      path: '/',
-    };
-
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.sameSite = 'none';
-      cookieOptions.secure = true;
-      if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN;
-    } else {
-      cookieOptions.sameSite = 'lax';
-      cookieOptions.secure = false;
-    }
-
-    res.cookie('token', token, cookieOptions);
-    console.log('[LOGIN] success for', email, '-> cookie set (sameSite=' + cookieOptions.sameSite + ')');
-
-    return res.json({ id: user.id, email: user.email, role: user.role });
+    return res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (err) {
     console.error('[LOGIN] unexpected error:', err && err.stack ? err.stack : err);
     if (process.env.NODE_ENV !== 'production') {
@@ -219,16 +206,10 @@ app.post("/api/logout", (req, res) => {
 });
 
 // GET current user and profile
-app.get("/api/me", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-
+app.get("/api/me", authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(p.id, { attributes: { exclude: ["passwordHash"] } });
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ["passwordHash"] } });
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    // return user record (includes name, accountNumber, phone, avatarUrl now)
     return res.json(user);
   } catch (err) {
     console.error("GET /api/me error:", err);
@@ -328,92 +309,51 @@ app.patch("/api/profile", async (req, res) => {
 });
 
 // ----- transaction endpoints -----
-app.post("/api/transactions", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-
+app.post("/api/transactions", authenticateToken, async (req, res) => {
   const { amount, description } = req.body;
   const tx = await Transaction.create({
     id: uuidv4(),
-    ownerEmail: p.email,
+    ownerEmail: req.user.email,
     amount: parseFloat(amount),
     description: description || "Money Transfer",
     status: "Pending",
     createdAtMs: Date.now(),
   });
-
-  // notify admins (global)
   io.emit("transactions:created", tx.toJSON());
   res.json(tx);
 });
 
-app.get("/api/transactions", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-
-  if (p.role === "admin") {
+app.get("/api/transactions", authenticateToken, async (req, res) => {
+  if (req.user.role === "admin") {
     const all = await Transaction.findAll({ order: [["createdAtMs", "DESC"]] });
     return res.json(all);
   }
-  const mine = await Transaction.findAll({ where: { ownerEmail: p.email }, order: [["createdAtMs", "DESC"]] });
+  const mine = await Transaction.findAll({ where: { ownerEmail: req.user.email }, order: [["createdAtMs", "DESC"]] });
   res.json(mine);
 });
 
 // admin approve
-app.patch("/api/transactions/:id/approve", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  console.log(
-    '[DEBUG] PATCH /api/transactions/:id/approve — tokenPresent=',
-    !!token,
-    ' tokenSample=',
-    token ? token.slice(0, 16) + '...' : null,
-    ' decoded=',
-    p
-  );
-  if (!p) return res.status(401).json({ message: "Not authenticated" }); // clearer status
-  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
-
+app.patch("/api/transactions/:id/approve", authenticateToken, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
   const tx = await Transaction.findByPk(req.params.id);
   if (!tx) return res.status(404).json({ message: "Not found" });
-
   tx.status = "Completed";
-  tx.approvedBy = p.email;
+  tx.approvedBy = req.user.email;
   await tx.save();
-
   emitToUser(tx.ownerEmail, "transaction:update", tx.toJSON());
   res.json(tx);
 });
 
-app.patch("/api/transactions/:id/decline", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  console.log(
-    '[DEBUG] PATCH /api/transactions/:id/decline — tokenPresent=',
-    !!token,
-    ' tokenSample=',
-    token ? token.slice(0, 16) + '...' : null,
-    ' decoded=',
-    p
-  );
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-  if (p.role !== "admin") return res.status(403).json({ message: "Forbidden" });
-
+app.patch("/api/transactions/:id/decline", authenticateToken, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
   const { forceLogout } = req.body;
   const tx = await Transaction.findByPk(req.params.id);
   if (!tx) return res.status(404).json({ message: "Not found" });
-
   tx.status = "Declined";
-  tx.declinedBy = p.email;
+  tx.declinedBy = req.user.email;
   await tx.save();
-
   emitToUser(tx.ownerEmail, "transaction:update", tx.toJSON());
-  if (forceLogout) {
-    emitToUser(tx.ownerEmail, "force-logout", { reason: "declined_by_admin" });
-  }
-
+  if (forceLogout) emitToUser(tx.ownerEmail, "force-logout", { reason: "declined_by_admin" });
   res.json(tx);
 });
 
@@ -497,15 +437,18 @@ function emitToUser(email, event, payload) {
 // authenticate socket by cookie in handshake
 io.use((socket, next) => {
   try {
-    const raw = socket.handshake.headers.cookie || "";
-    const cookies = cookie.parse(raw || "");
-    const token = cookies.token;
-    if (!token) return next(); // allow connection but no registered user
+    const authToken = socket.handshake.auth?.token;
+    const headerAuth = socket.handshake.headers?.authorization;
+    const tokenFromHeader = headerAuth && headerAuth.startsWith('Bearer ') ? headerAuth.slice(7) : null;
+    const token = authToken || tokenFromHeader || null;
+
+    if (!token) return next(); // allow connection unauthenticated
     const p = verifyToken(token);
     if (!p) return next();
     socket.user = p;
     return next();
   } catch (err) {
+    console.error("socket auth error:", err);
     return next();
   }
 });
