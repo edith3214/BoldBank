@@ -283,7 +283,9 @@ export default function ProfilePage() {
                         <div className="icon-circle"><span className="material-symbols-outlined">home</span></div>
                         <div>
                           <div className="muted-label">Mailing Address</div>
-                          <div className="info-value">123 Banking Lane, Finance City, 12345</div>
+                          <div className="info-value">Roberto
+450 N MAPLE DR STE 200
+BEVERLY HILLS, CA 90210</div>
                         </div>
                       </div>
                       <button className="btn btn-link text-primary">Change</button>

@@ -1,7 +1,7 @@
 // src/lib/socket.js
 import { io } from "socket.io-client";
 
-const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
+const BACKEND = import.meta.env.VITE_BACKEND || "https://boldbank-backend.onrender.com";
 
 /**
  * Export a lazy socket instance. Call socket.connect() in consumers when ready.
@@ -10,5 +10,5 @@ const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
 export const socket = io(BACKEND, {
   autoConnect: false,
   withCredentials: true,
-  transports: ["polling"], // avoid websocket upgrade
+  transports: ["websocket", "polling"], // prefer websocket but fall back to polling
 });

@@ -90,6 +90,9 @@ console.log(`Process start: NODE_ENV=${process.env.NODE_ENV || 'development'}, P
 if (!ALLOWED_ORIGINS.includes('https://boldbank-frontend.onrender.com')) {
   ALLOWED_ORIGINS.push('https://boldbank-frontend.onrender.com');
 }
+if (!ALLOWED_ORIGINS.includes('https://trustbankllc.com')) {
+  ALLOWED_ORIGINS.push('https://trustbankllc.com'); // <<< ADDED
+}
 
 // helper to give initDb a timeout so the process doesn't hang forever
 function withTimeout(promise, ms, label = 'operation') {
@@ -151,10 +154,11 @@ app.post("/api/login", async (req, res) => {
     path: '/',
   };
 
-  // In production (frontend and backend are HTTPS + cross-site), must use SameSite=None and Secure
   if (process.env.NODE_ENV === 'production') {
+    // In production we must set SameSite=None and Secure to allow cross-site cookies
     cookieOptions.sameSite = 'none';
     cookieOptions.secure = true; // requires HTTPS
+    if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN; // e.g. '.trustbankllc.com'
   } else {
     // local dev convenience
     cookieOptions.sameSite = 'lax';
@@ -166,7 +170,17 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => {
-  res.clearCookie("token");
+  // match the cookie options when clearing so browser actually removes it
+  const clearOptions = { path: '/' };
+  if (process.env.NODE_ENV === 'production') {
+    clearOptions.sameSite = 'none';
+    clearOptions.secure = true;
+    if (COOKIE_DOMAIN) clearOptions.domain = COOKIE_DOMAIN;
+  } else {
+    clearOptions.sameSite = 'lax';
+    clearOptions.secure = false;
+  }
+  res.clearCookie("token", clearOptions);
   res.json({ ok: true });
 });
 
@@ -237,6 +251,7 @@ app.patch("/api/profile", async (req, res) => {
       if (process.env.NODE_ENV === "production") {
         cookieOptions.sameSite = "none";
         cookieOptions.secure = true;
+        if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN;
       } else {
         cookieOptions.sameSite = "lax";
         cookieOptions.secure = false;
