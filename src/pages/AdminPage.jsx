@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { useBank } from "../context/BankContext";
 import { useAdminControl } from "../context/AdminControlContext";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const { transactions, approveTransaction, declineTransaction } = useBank();
   const { triggerLogout, declineTransaction: signalDecline } = useAdminControl();
   const { user } = useAuth();
@@ -108,8 +110,8 @@ export default function AdminPage() {
                   (transactions && transactions.length && (transactions[0].ownerEmail || transactions[0].owner)) || "";
                 const email = window.prompt("Enter the user's email to open chat with:", defaultEmail);
                 if (!email) return;
-                // navigate to chat route for that user
-                window.location.href = `/chat?user=${encodeURIComponent(email.trim())}`;
+                // client-side navigation keeps React state & sockets intact
+                navigate(`/chat?user=${encodeURIComponent(email.trim())}`);
               }}
             >
               Chat with User

@@ -1,6 +1,7 @@
 // src/context/AdminControlContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { socket } from "../lib/socket";
+import { socket, connectSocketWithToken, disconnectSocket } from "../lib/socket";
+import { getToken } from "../lib/api";
 import { useAuth } from "./AuthContext";
 
 const AdminControlContext = createContext();
@@ -14,7 +15,7 @@ export function AdminControlProvider({ children }) {
     if (!user?.email) {
       // if no user, ensure socket is disconnected and clear flags
       try {
-        if (socket && socket.connected) socket.disconnect();
+        disconnectSocket();
       } catch (e) {
         /* ignore */
       }
@@ -23,9 +24,10 @@ export function AdminControlProvider({ children }) {
       return;
     }
 
-    // connect only once after user exists
+    // token-aware connect so handshake includes JWT
     try {
-      if (socket && !socket.connected) socket.connect();
+      const token = getToken();
+      connectSocketWithToken(token);
     } catch (e) {
       /* ignore */
     }

@@ -1,3 +1,4 @@
+//ChatPage.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { socket } from "../lib/socket";
