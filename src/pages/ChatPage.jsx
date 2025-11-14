@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { socket } from "../lib/socket";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { apiFetch, getToken } from "../lib/api";
+import { connectSocketWithToken } from "../lib/socket";
 
 const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
 
@@ -54,10 +56,13 @@ export default function ChatPage() {
     // fetch initial convo
     const fetchConvo = async () => {
       try {
-        const res = await fetch(`${BACKEND}/api/messages?user=${encodeURIComponent(other)}`, {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error("Failed to load messages");
+        // use apiFetch so Authorization header is attached
+        const res = await apiFetch(`/api/messages?user=${encodeURIComponent(other)}`, { method: "GET" });
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          console.error("[ChatPage] failed to fetch convo", res.status, body);
+          throw new Error("Failed to load messages");
+        }
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -66,8 +71,9 @@ export default function ChatPage() {
     };
     fetchConvo();
 
-    // ensure socket connected
-    if (!socket.connected) socket.connect();
+    // attach token and connect so server receives token in handshake
+    const token = getToken();
+    connectSocketWithToken(token);
 
     const onNew = (msg) => {
       // only add messages that belong to this conversation
@@ -96,13 +102,15 @@ export default function ChatPage() {
     e.preventDefault();
     if (!text.trim()) return;
     try {
-      const res = await fetch(`${BACKEND}/api/messages`, {
+      const res = await apiFetch("/api/messages", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toEmail: other, content: text.trim() }),
       });
-      if (!res.ok) throw new Error("Send failed");
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        console.error("[ChatPage] send failed", res.status, body);
+        throw new Error("Send failed");
+      }
       const saved = await res.json();
       // server emits the saved message to both participants; we can optimistically append too
       setMessages((prev) => [...prev, saved]);
@@ -152,4 +160,48 @@ export default function ChatPage() {
       </form>
     </div>
   );
+}
+
+/**
+ * Fetch conversation with otherEmail.
+ * Uses apiFetch which attaches Authorization header (Bearer token).
+ */
+export async function fetchConversation(otherEmail) {
+  try {
+    const url = `/api/messages?user=${encodeURIComponent(otherEmail)}`;
+    const res = await apiFetch(url, { method: "GET" });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[fetchConversation] non-ok", res.status, body);
+      throw new Error("Failed to load messages");
+    }
+    const msgs = await res.json();
+    return msgs;
+  } catch (err) {
+    console.error("fetch convo error", err);
+    throw err;
+  }
+}
+
+/**
+ * Send a message to toEmail with content.
+ * Returns saved message from server.
+ */
+export async function sendMessage(toEmail, content) {
+  try {
+    const res = await apiFetch("/api/messages", {
+      method: "POST",
+      body: JSON.stringify({ toEmail, content }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[sendMessage] non-ok", res.status, body);
+      throw new Error("Failed to send message");
+    }
+    const saved = await res.json();
+    return saved;
+  } catch (err) {
+    console.error("send message error", err);
+    throw err;
+  }
 }

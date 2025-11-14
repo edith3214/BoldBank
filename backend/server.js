@@ -357,57 +357,59 @@ app.patch("/api/transactions/:id/decline", authenticateToken, async (req, res) =
   res.json(tx);
 });
 
-// create message
-app.post("/api/messages", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
-
+// create message (token-based)
+app.post("/api/messages", authenticateToken, async (req, res) => {
   const { toEmail, content } = req.body;
   if (!toEmail || !content) return res.status(400).json({ message: "toEmail and content required" });
 
-  const msg = await Message.create({
-    id: uuidv4(),
-    fromEmail: p.email,
-    toEmail,
-    content,
-    createdAtMs: Date.now(),
-    read: false,
-  });
+  try {
+    const msg = await Message.create({
+      id: uuidv4(),
+      fromEmail: req.user.email,
+      toEmail,
+      content,
+      createdAtMs: Date.now(),
+      read: false,
+    });
 
-  // emit to recipient's sockets (if connected)
-  emitToUser(toEmail, "message:created", msg.toJSON());
-  // emit to sender as well so UI can get DB timestamp
-  emitToUser(p.email, "message:created", msg.toJSON());
+    // emit to recipient's sockets (if connected)
+    emitToUser(toEmail, "message:created", msg.toJSON());
+    // emit to sender as well so UI can get DB timestamp
+    emitToUser(req.user.email, "message:created", msg.toJSON());
 
-  res.json(msg);
+    res.json(msg);
+  } catch (err) {
+    console.error("POST /api/messages error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // fetch messages (conversation). for admin: pass ?user=user@bank.com to get convo for that user
-app.get("/api/messages", async (req, res) => {
-  const token = req.cookies?.token;
-  const p = verifyToken(token);
-  if (!p) return res.status(401).json({ message: "Not authenticated" });
+app.get("/api/messages", authenticateToken, async (req, res) => {
+  try {
+    const other = req.query.user; // the other participant's email
+    if (!other) return res.status(400).json({ message: "Missing query param: user" });
 
-  const other = req.query.user; // the other participant's email
-  if (!other) return res.status(400).json({ message: "Missing query param: user" });
+    // only allow if current user is one of the participants (admin may supply any user)
+    if (req.user.email !== other && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-  // only allow if current user is one of the participants (admin may supply any user)
-  if (p.email !== other && p.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden" });
+    const msgs = await Message.findAll({
+      where: {
+        [Sequelize.Op.or]: [
+          { fromEmail: req.user.email, toEmail: other },
+          { fromEmail: other, toEmail: req.user.email },
+        ],
+      },
+      order: [["createdAtMs", "ASC"]],
+    });
+
+    res.json(msgs);
+  } catch (err) {
+    console.error("GET /api/messages error:", err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  const msgs = await Message.findAll({
-    where: {
-      [Sequelize.Op.or]: [
-        { fromEmail: p.email, toEmail: other },
-        { fromEmail: other, toEmail: p.email },
-      ],
-    },
-    order: [["createdAtMs", "ASC"]],
-  });
-
-  res.json(msgs);
 });
 
 // ---- Socket.IO user socket tracking ----
