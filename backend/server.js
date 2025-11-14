@@ -15,6 +15,9 @@ const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 const PORT = process.env.PORT || 3001;
 // const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
 
+// add after PORT
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || ""; // e.g. ".trustbankllc.com" in production
+
 // top of file (already have dotenv earlier)
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3001"; // fallback
 
@@ -86,12 +89,15 @@ process.on('unhandledRejection', (reason, p) => {
 // helpful quick log so Render shows process started
 console.log(`Process start: NODE_ENV=${process.env.NODE_ENV || 'development'}, PORT=${PORT}`);
 
-// ensure production frontend origin is allowed by default
+// ensure production frontend origins are allowed by default
 if (!ALLOWED_ORIGINS.includes('https://boldbank-frontend.onrender.com')) {
   ALLOWED_ORIGINS.push('https://boldbank-frontend.onrender.com');
 }
 if (!ALLOWED_ORIGINS.includes('https://trustbankllc.com')) {
-  ALLOWED_ORIGINS.push('https://trustbankllc.com'); // <<< ADDED
+  ALLOWED_ORIGINS.push('https://trustbankllc.com');
+}
+if (!ALLOWED_ORIGINS.includes('https://www.trustbankllc.com')) {
+  ALLOWED_ORIGINS.push('https://www.trustbankllc.com');
 }
 
 // helper to give initDb a timeout so the process doesn't hang forever
@@ -139,38 +145,66 @@ startServer();
 
 // ----- auth endpoints -----
 app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
-  if (!user) return res.status(401).json({ message: "Invalid credentials" });
-  const bcrypt = require("bcrypt");
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) return res.status(401).json({ message: "Invalid credentials" });
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
+  try {
+    const { email, password } = req.body || {};
+    console.log('[LOGIN] attempt for', email);
 
-  // set cookie with appropriate SameSite & Secure based on environment
-  const cookieOptions = {
-    httpOnly: true,
-    maxAge: 8 * 60 * 60 * 1000, // 8 hours
-    path: '/',
-  };
+    if (!email || !password) {
+      console.warn('[LOGIN] missing email or password');
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  if (process.env.NODE_ENV === 'production') {
-    // In production we must set SameSite=None and Secure to allow cross-site cookies
-    cookieOptions.sameSite = 'none';
-    cookieOptions.secure = true; // requires HTTPS
-    if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN; // e.g. '.trustbankllc.com'
-  } else {
-    // local dev convenience
-    cookieOptions.sameSite = 'lax';
-    cookieOptions.secure = false;
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      console.warn('[LOGIN] user not found for', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const bcrypt = require('bcrypt');
+
+    if (!user.passwordHash) {
+      console.error('[LOGIN] user record missing passwordHash for', email);
+      return res.status(500).json({ message: 'Server error: user password not set' });
+    }
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      console.warn('[LOGIN] invalid password for', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = signToken({ id: user.id, email: user.email, role: user.role });
+
+    // cookie options
+    const cookieOptions = {
+      httpOnly: true,
+      maxAge: 8 * 60 * 60 * 1000, // 8 hours
+      path: '/',
+    };
+
+    if (process.env.NODE_ENV === 'production') {
+      cookieOptions.sameSite = 'none';
+      cookieOptions.secure = true;
+      if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN;
+    } else {
+      cookieOptions.sameSite = 'lax';
+      cookieOptions.secure = false;
+    }
+
+    res.cookie('token', token, cookieOptions);
+    console.log('[LOGIN] success for', email, '-> cookie set (sameSite=' + cookieOptions.sameSite + ')');
+
+    return res.json({ id: user.id, email: user.email, role: user.role });
+  } catch (err) {
+    console.error('[LOGIN] unexpected error:', err && err.stack ? err.stack : err);
+    if (process.env.NODE_ENV !== 'production') {
+      return res.status(500).json({ message: 'Internal Server Error', error: String(err), stack: err.stack });
+    }
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
-
-  res.cookie("token", token, cookieOptions);
-  res.json({ id: user.id, email: user.email, role: user.role });
 });
 
 app.post("/api/logout", (req, res) => {
-  // match the cookie options when clearing so browser actually removes it
   const clearOptions = { path: '/' };
   if (process.env.NODE_ENV === 'production') {
     clearOptions.sameSite = 'none';
