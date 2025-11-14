@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket, connectSocketWithToken, disconnectSocket } from "../lib/socket";
-import { setToken, getToken } from "../lib/api";
+import { setToken, getToken, apiFetch } from "../lib/api";
 
 const AuthContext = createContext();
 
@@ -33,6 +33,52 @@ export function AuthProvider({ children }) {
     })();
     return () => { mounted = false; };
   }, []);
+
+  // ---------- ADDED: rehydrate user from token on mount ----------
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // if we already have a user in memory, nothing to do
+        if (typeof user !== "undefined" && user) return;
+
+        // read token (may be null)
+        const token = typeof getToken === "function" ? getToken() : null;
+        if (!token) {
+          // no token persisted — nothing to rehydrate
+          return;
+        }
+
+        // validate token with backend; apiFetch attaches Authorization
+        const res = await apiFetch("/api/me", { method: "GET" });
+        if (!res.ok) {
+          // token is invalid/expired -> remove it (safe) and bail out
+          if (typeof setToken === "function") setToken(null);
+          return;
+        }
+
+        const data = await res.json();
+        if (!mounted) return;
+
+        // set user in your context
+        if (typeof setUser === "function") setUser(data);
+
+        // connect socket with token so server registers this socket under the user
+        try {
+          connectSocketWithToken(token);
+        } catch (err) {
+          console.warn("Socket connect during rehydrate failed:", err);
+        }
+      } catch (err) {
+        console.error("Auth rehydrate error:", err);
+        // best effort: clear token if something went wrong
+        try { setToken(null); } catch (_) {}
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []); // run once on mount
+  // ---------- END ADDED BLOCK ----------
 
   const login = async (email, password) => {
     try {
