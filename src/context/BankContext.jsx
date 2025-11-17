@@ -9,7 +9,7 @@ const BankContext = createContext();
 export function BankProvider({ children }) {
   const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
   const { user } = useAuth(); // used to filter/decide behavior
-  const [balance, setBalance] = useState(8457458.47);
+  const [balance, setBalance] = useState(8157450.47);
   const [transactions, setTransactions] = useState([]);
   const socketConnectedRef = useRef(false);
 
