@@ -1,3 +1,4 @@
+// src/lib/api.js
 const BACKEND = import.meta.env.VITE_BACKEND || "https://boldbank-backend.onrender.com";
 const TOKEN_KEY = "bb_token"; // localStorage key
 

@@ -12,73 +12,83 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
 
-  // Check session on mount
+  // ---------- REPLACE rehydrate useEffect WITH THE FOLLOWING BLOCK ----------
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
-        const r = await fetch(`${BACKEND}/api/me`, {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!r.ok) throw new Error("Not authenticated");
-        const data = await r.json();
-        if (mounted) setUser(data);
-      } catch (err) {
-        if (mounted) setUser(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+        console.log("[Auth] rehydrate: start");
 
-  // ---------- ADDED: rehydrate user from token on mount ----------
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        // if we already have a user in memory, nothing to do
-        if (typeof user !== "undefined" && user) return;
-
-        // read token (may be null)
-        const token = typeof getToken === "function" ? getToken() : null;
-        if (!token) {
-          // no token persisted — nothing to rehydrate
+        // quick guard: don't overwrite an already-hydrated user
+        if (user) {
+          console.log("[Auth] rehydrate: user already in memory, skipping");
+          if (mounted) setLoading(false);
           return;
         }
 
-        // validate token with backend; apiFetch attaches Authorization
-        const res = await apiFetch("/api/me", { method: "GET" });
+        const token = typeof getToken === "function" ? getToken() : null;
+        console.log("[Auth] rehydrate: found token?", !!token);
+
+        if (!token) {
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
+          console.log("[Auth] rehydrate: no token, leaving unauthenticated");
+          return;
+        }
+
+        // Use explicit BACKEND + Authorization header so we don't rely on other helpers' BASE_URL
+        const base = typeof BACKEND === "string" && BACKEND ? BACKEND : (import.meta.env.VITE_BACKEND || "");
+        const url = `${base.replace(/\/$/, "")}/api/me`;
+        console.log("[Auth] rehydrate: calling", url);
+
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          // do not use credentials: 'include' — we moved to Bearer tokens
+        });
+
+        console.log("[Auth] rehydrate: /api/me status =", res.status);
+
         if (!res.ok) {
-          // token is invalid/expired -> remove it (safe) and bail out
-          if (typeof setToken === "function") setToken(null);
+          // helpful debug: print body when non-ok
+          const txt = await res.text().catch(() => "");
+          console.warn("[Auth] rehydrate: /api/me non-ok body:", txt);
+          // token invalid or expired -> remove it and bail
+          try { if (typeof setToken === "function") setToken(null); } catch (_) {}
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
           return;
         }
 
         const data = await res.json();
         if (!mounted) return;
 
-        // set user in your context
-        if (typeof setUser === "function") setUser(data);
+        console.log("[Auth] rehydrate: success; user =", data?.email || "(no email)");
 
-        // connect socket with token so server registers this socket under the user
-        try {
-          connectSocketWithToken(token);
-        } catch (err) {
-          console.warn("Socket connect during rehydrate failed:", err);
-        }
+        // set user and connect socket with token
+        setUser(data);
+        try { connectSocketWithToken(token); } catch (err) { console.warn("Socket reconnect failed:", err); }
       } catch (err) {
-        console.error("Auth rehydrate error:", err);
-        // best effort: clear token if something went wrong
-        try { setToken(null); } catch (_) {}
+        console.error("[Auth] rehydrate: unexpected error", err);
+        try { if (typeof setToken === "function") setToken(null); } catch (_) {}
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+        console.log("[Auth] rehydrate: finished (loading=false)");
       }
     })();
 
     return () => { mounted = false; };
   }, []); // run once on mount
-  // ---------- END ADDED BLOCK ----------
+  // ---------- END REPLACEMENT BLOCK ----------
 
   const login = async (email, password) => {
     try {
