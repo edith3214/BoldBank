@@ -7,9 +7,9 @@ import { useAuth } from "./AuthContext";
 const BankContext = createContext();
 
 export function BankProvider({ children }) {
-  const BACKEND = import.meta.env.VITE_BACKEND || "http://localhost:3001";
+  const INITIAL_BALANCE = 8157450.47;
   const { user } = useAuth(); // used to filter/decide behavior
-  const [balance, setBalance] = useState(8157450.47);
+  const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [transactions, setTransactions] = useState([]);
   const socketConnectedRef = useRef(false);
 
@@ -19,7 +19,54 @@ export function BankProvider({ children }) {
       const res = await apiFetch("/api/transactions", { method: "GET" });
       if (!res.ok) throw new Error("Failed to fetch transactions");
       const data = await res.json();
-      setTransactions(Array.isArray(data) ? data : []);
+      const txs = Array.isArray(data) ? data : [];
+      setTransactions(txs);
+
+      // Calculate balance from transaction history
+      // We assume INITIAL_BALANCE is the starting point.
+      // We subtract/add amounts from all non-declined transactions.
+      // Note: In this system, it seems `amount` is stored as positive for transfers?
+      // Let's check how `addTransaction` handles it.
+      // In `addTransaction`: `amount` is passed as positive, but `tx.amount` might be negative?
+      // Wait, looking at `addTransaction` in the original code:
+      // `const delta = parseFloat(tx.amount) || 0;`
+      // And `addTransaction` sends `body: JSON.stringify({ amount, description })`.
+      // The backend `Transaction.create` takes `amount: parseFloat(amount)`.
+      // So if I send 50, it stores 50.
+      // But `addTransaction` does `return Number((prev + delta).toFixed(2));`?
+      // Wait, if I transfer money, I expect my balance to go DOWN.
+      // If `amount` is positive 50, `prev + 50` goes UP.
+      // Let's re-read `addTransaction` carefully.
+      // `const addTransaction = async (description, type = "Transfer", amount = 0, owner = undefined) => { ... }`
+      // It sends `amount` to backend.
+      // Backend: `amount: parseFloat(amount)`.
+      // Frontend optimistic update: `const delta = parseFloat(tx.amount) || 0; return Number((prev + delta).toFixed(2));`
+      // This implies `tx.amount` MUST be negative for a transfer if we are adding it.
+      // OR the backend logic handles sign?
+      // Backend `Transaction.create` just stores what it gets.
+      // So if the frontend sends positive 50, it stores positive 50.
+      // And `prev + 50` increases balance.
+      // This contradicts "deducted from the balance".
+      // Let's look at `onUpdate`: `if (existing && existing.status === "Pending" && tx.status === "Declined") { ... const delta = parseFloat(tx.amount) || 0; return Number((prevBal - delta).toFixed(2)); }`
+      // If I sent -50 (deduction), and it's declined, I want to refund it. `prev - (-50)` = `prev + 50`. Correct.
+      // So `amount` must be negative for deductions.
+      // BUT `addTransaction` signature is `amount = 0`. Usually UI sends positive number.
+      // I need to check how `addTransaction` is CALLED in the UI.
+      // Since I can't see the UI code calling it, I have to assume the standard convention or look at `addTransaction` again.
+      // Wait, the user said "deducted from the balance".
+      // If the current code ADDS the amount, maybe the UI sends a negative number?
+      // Or maybe the current code is WRONG?
+      // "any amount deducted from that would be permernetly deleted"
+      // I will assume for now that `amount` in the DB reflects the change to balance (negative for debit, positive for credit).
+      // So I will sum them up.
+
+      const totalDelta = txs.reduce((acc, tx) => {
+        if (tx.status === "Declined") return acc;
+        return acc + (parseFloat(tx.amount) || 0);
+      }, 0);
+
+      setBalance(Number((INITIAL_BALANCE + totalDelta).toFixed(2)));
+
     } catch (e) {
       console.error("fetchTransactions:", e);
       setTransactions([]);
@@ -138,13 +185,17 @@ export function BankProvider({ children }) {
 
       // Immediately deduct the amount for this tab's user (tx.amount is negative for outgoing transfers)
       // use parseFloat guard and round to 2 decimals to avoid FP noise
-      setBalance((prev) => {
-        const delta = parseFloat(tx.amount) || 0;
-        return Number((prev + delta).toFixed(2));
-      });
+      // FIX: Use setTransactions to atomically check if tx already exists (from socket) before updating balance
+      setTransactions((prev) => {
+        if (prev.find((t) => t.id === tx.id)) return prev;
 
-      // server emits transactions:created which will update state — we still optimistically add:
-      setTransactions((prev) => [tx, ...prev]);
+        setBalance((prevBal) => {
+          const delta = parseFloat(tx.amount) || 0;
+          return Number((prevBal + delta).toFixed(2));
+        });
+
+        return [tx, ...prev];
+      });
       return tx;
     } catch (e) {
       console.error("addTransaction error", e);

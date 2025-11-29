@@ -1,15 +1,15 @@
 // src/pages/DashboardPage.jsx
 import React, { useEffect, useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { IoPaperPlaneOutline,IoSettings } from "react-icons/io5";
+import { IoPaperPlaneOutline, IoSettings } from "react-icons/io5";
 import { FaRegBuilding } from "react-icons/fa";
-import { MdHistory,MdSos } from "react-icons/md";
-import { IoMdAdd,IoMdCash } from "react-icons/io";
+import { MdHistory, MdSos } from "react-icons/md";
+import { IoMdAdd, IoMdCash } from "react-icons/io";
 import { FiHome } from "react-icons/fi";
 import { IoStatsChartOutline, IoGridOutline } from "react-icons/io5";
 import { CiCreditCard1 } from "react-icons/ci";
 import { GoPerson } from "react-icons/go";
-import { BiHide, BiWorld } from "react-icons/bi";
+import { BiHide, BiShow, BiWorld } from "react-icons/bi";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { useBank } from "../context/BankContext";
 import { useAuth } from "../context/AuthContext";
@@ -47,332 +47,344 @@ export default function DashboardPage() {
 
   // add showMenu state
   const [showMenu, setShowMenu] = useState(false);
+  const [showBalance, setShowBalance] = useState(true);
 
   // drawer state for accessible side navigation
   const [showDrawer, setShowDrawer] = useState(false);
 
+
+
+
   // handle Esc to close & prevent background scroll when drawer open
   useEffect(() => {
-    function onKey(e) {
-      if (e.key === "Escape") setShowDrawer(false);
-    }
+        function onKey(e) {
+          if (e.key === "Escape") setShowDrawer(false);
+        }
     if (showDrawer) {
-      document.addEventListener("keydown", onKey);
+        document.addEventListener("keydown", onKey);
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "";
+        document.body.style.overflow = "";
     }
     return () => {
-      document.removeEventListener("keydown", onKey);
+        document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
   }, [showDrawer]);
 
-  // show live time/date for a US timezone
-  const [now, setNow] = useState(new Date());
-  // change this to another US timezone if you prefer, e.g. "America/Chicago"
-  const US_TIMEZONE = "America/New_York";
+      // show live time/date for a US timezone
+      const [now, setNow] = useState(new Date());
+      // change this to another US timezone if you prefer, e.g. "America/Chicago"
+      const US_TIMEZONE = "America/New_York";
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  return (
-    <div className="dashboard-page">
-      <header className="topbar">
-        <button
-          className="hamburger"
-          aria-label="open drawer"
-          onClick={() => setShowDrawer(true)}
-        >
-          <RxHamburgerMenu />
-        </button>
-        <div className="brand"> 
-          <div className="brand-icon"></div>
-          <div className="brand-text">TRUST BANK</div>
-        </div>
-        <div className="top-actions">
-          <button className="bell" aria-label="notifications"><IoMdNotificationsOutline /><span className="dot"/></button>
-          <Link to="/profile" className="avatar" aria-label="Profile">{initials}</Link>
-        </div>
-      </header>
-
-      {/* Drawer overlay + sliding panel */}
-      {showDrawer && (
-        <>
-          <div
-            className="drawer-overlay"
-            onClick={() => setShowDrawer(false)}
-            aria-hidden="true"
-          />
-          <aside
-            className="drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation drawer"
-            onClick={(e) => e.stopPropagation()}
+      return (
+      <div className="dashboard-page">
+        <header className="topbar">
+          <button
+            className="hamburger"
+            aria-label="open drawer"
+            onClick={() => setShowDrawer(true)}
           >
-            <div className="drawer-header">
-              <div>
-                <div className="drawer-name">{profile?.name}</div>
-                <div className="drawer-acct">Acct • {profile?.accountNumber || "—"}</div>
+            <RxHamburgerMenu />
+          </button>
+          <div className="brand">
+            <div className="brand-icon"></div>
+            <div className="brand-text">TRUST BANK</div>
+          </div>
+          <div className="top-actions">
+            <button className="bell" aria-label="notifications"><IoMdNotificationsOutline /><span className="dot" /></button>
+            <Link to="/profile" className="avatar" aria-label="Profile">{initials}</Link>
+          </div>
+        </header>
+
+        {/* Drawer overlay + sliding panel */}
+        {showDrawer && (
+          <>
+            <div
+              className="drawer-overlay"
+              onClick={() => setShowDrawer(false)}
+              aria-hidden="true"
+            />
+            <aside
+              className="drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation drawer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="drawer-header">
+                <div>
+                  <div className="drawer-name">{profile?.name}</div>
+                  <div className="drawer-acct">Acct • {profile?.accountNumber || "—"}</div>
+                </div>
+                <button
+                  className="drawer-close"
+                  aria-label="Close drawer"
+                  onClick={() => setShowDrawer(false)}
+                >
+                  <IoMdClose />
+                </button>
               </div>
-              <button
-                className="drawer-close"
-                aria-label="Close drawer"
-                onClick={() => setShowDrawer(false)}
-              >
-                <IoMdClose />
-              </button>
-            </div>
 
-            <nav className="drawer-nav" aria-label="Main">
-              <Link to="/transfer" className="drawer-link" onClick={() => setShowDrawer(false)}>
-              <IoPaperPlaneOutline aria-hidden="true"/>
-                Transfer
-              </Link>
+              <nav className="drawer-nav" aria-label="Main">
+                <Link to="/transfer" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                  <IoPaperPlaneOutline aria-hidden="true" />
+                  Transfer
+                </Link>
 
-              <Link to="/history" className="drawer-link" onClick={() => setShowDrawer(false)}>               
-                <MdHistory aria-hidden="true"/>
-                History
-              </Link>
+                <Link to="/history" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                  <MdHistory aria-hidden="true" />
+                  History
+                </Link>
 
-              <Link to="/deposit" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                <IoMdAdd aria-hidden="true" />
-                 Deposit
-              </Link>
+                <Link to="/deposit" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                  <IoMdAdd aria-hidden="true" />
+                  Deposit
+                </Link>
 
-              <Link to="/profile" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                <GoPerson aria-hidden="true" /> Profile
-              </Link>
+                <Link to="/profile" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                  <GoPerson aria-hidden="true" /> Profile
+                </Link>
 
-              <Link to="/chat" className="drawer-link" onClick={() => setShowDrawer(false)}>
-                <MdSos  aria-hidden="true" /> Support
-              </Link>
+                <Link to="/chat" className="drawer-link" onClick={() => setShowDrawer(false)}>
+                  <MdSos aria-hidden="true" /> Support
+                </Link>
 
-              <button
-                className="drawer-link drawer-logout"
-                onClick={() => { logout(); setShowDrawer(false); }}
-              >
-                🚪 Logout
-              </button>
-            </nav>
-          </aside>
-        </>
-      )}
+                <button
+                  className="drawer-link drawer-logout"
+                  onClick={() => { logout(); setShowDrawer(false); }}
+                >
+                  🚪 Logout
+                </button>
+              </nav>
+            </aside>
+          </>
+        )}
 
-      <main className="content">
-        {/* === 1. BALANCE SECTION === */}
-        <div className="dashboard-section balance-section">
-          <section className="account-card">
-            <div className="account-left">
-              <div className="avatar-big">{initials}</div>
-              <div className="greetings">
-                <div className="greet-line">Good Day!</div>
-                <div className="username">{profile?.name}</div>
+        <main className="content">
+          {/* === 1. BALANCE SECTION === */}
+          <div className="dashboard-section balance-section">
+            <section className="account-card">
+              <div className="account-left">
+                <div className="avatar-big">{initials}</div>
+                <div className="greetings">
+                  <div className="greet-line">Good Day!</div>
+                  <div className="username">{profile?.name}</div>
+                </div>
               </div>
-            </div>
 
-            <div className="account-right" aria-live="polite">
-              <div className="time">
-                {new Intl.DateTimeFormat("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: true,
-                  timeZone: US_TIMEZONE,
-                }).format(now)}
+              <div className="account-right" aria-live="polite">
+                <div className="time">
+                  {new Intl.DateTimeFormat("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                    timeZone: US_TIMEZONE,
+                  }).format(now)}
+                </div>
+                <div className="date">
+                  {new Intl.DateTimeFormat("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: US_TIMEZONE,
+                  }).format(now)}
+                </div>
               </div>
-              <div className="date">
-                {new Intl.DateTimeFormat("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  timeZone: US_TIMEZONE,
-                }).format(now)}
-              </div>
-            </div>
 
-            <div className="balance-block">
+              <div className="balance-block">
               <div className="available">
                 Available Balance
-                <button className="eye" aria-label="toggle-visibility"><BiHide /></button>
+                <button className="eye" aria-label="toggle-visibility" onClick={() => setShowBalance(!showBalance)}>
+                  {showBalance ? <BiHide /> : <BiShow />}
+                </button>
               </div>
               <div className="balance">
-                ${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                <span className="currency">USD</span>
+                {showBalance ? (
+                  <>
+                    ${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <span className="currency">USD</span>
+                  </>
+                ) : (
+                  "******"
+                )}
               </div>
 
-              <div className="acct-row">
-                <div className="acct-number">
-                  <div className="shield">🛡️</div>
-                  <div className="acct-text">Your Account Nur <strong>77...</strong></div>
-                  <span className="status active">Active</span>
+                <div className="acct-row">
+                  <div className="acct-number">
+                    <div className="shield">🛡️</div>
+                    <div className="acct-text">Your Account Nur <strong>77...</strong></div>
+                    <span className="status active">Active</span>
+                  </div>
+
+                  <div className="acct-actions">
+                    <button className="btn trans">Transactions</button>
+                    {/* <button className="btn topup">Top up</button> */}
+                  </div>
                 </div>
-
-                <div className="acct-actions">
-                  <button className="btn trans">Transactions</button>
-                  {/* <button className="btn topup">Top up</button> */}
-                </div>
               </div>
-            </div>
-          </section>
-        </div>
-
-        {/* === 2. QUICK ACTIONS SECTION === */}
-        <div className="dashboard-section quick-actions-section">
-          <section className="actions-intro">
-            <h2>What would you like to do today?</h2>
-            <p>Choose from our popular actions below</p>
-          </section>
-
-          <section className="actions-grid">
-            <Link to="/account" className="tile gray" aria-label="Account Info">
-              <div className="tile-icon"><FaRegBuilding /></div>
-              <div className="tile-text">Account Info</div>
-            </Link>
-            <Link to="/transfer" className="tile blue" aria-label="Send Money">
-              <div className="tile-icon"><IoPaperPlaneOutline /></div>
-              <div className="tile-text">Send Money</div>
-            </Link>
-            <Link to="/deposit" className="tile mint" aria-label="Deposit">
-              <div className="tile-icon"><IoMdAdd /></div>
-              <div className="tile-text">Deposit</div>
-            </Link>
-            <Link to="/history" className="tile lilac" aria-label="History">
-              <div className="tile-icon"><MdHistory /></div>
-              <div className="tile-text">History</div>
-            </Link>
-          </section>
-        </div>
-
-        {/* === 3. CARDS SECTION === */}
-        <div className="dashboard-section cards-section">
-          <div className="d-flex align-items-center justify-content-between mb-2">
-            <button className="nav-item" aria-label="cards"><CiCreditCard1 /></button>
-            <h6 className="m-0">Your Cards</h6>
-            <a className="view-all">View all</a>
+            </section>
           </div>
 
-          <div className="visa-card p-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <div className="card-small">Trust Bank</div>
-                <div className="card-title">VIRTUAL BANKING</div>
-              </div>
-              <div className="card-right text-end">
-                <div className="card-brand">VISA</div>
-              </div>
-            </div>
+          {/* === 2. QUICK ACTIONS SECTION === */}
+          <div className="dashboard-section quick-actions-section">
+            <section className="actions-intro">
+              <h2>What would you like to do today?</h2>
+              <p>Choose from our popular actions below</p>
+            </section>
 
-            <div className="card-number">•••• •••• •••• 9874</div>
-            <div className="d-flex justify-content-between mt-2 card-meta">
-              <div>Card Holder</div>
-              <div>Valid Thru</div>
-            </div>
+            <section className="actions-grid">
+              <Link to="/account" className="tile gray" aria-label="Account Info">
+                <div className="tile-icon"><FaRegBuilding /></div>
+                <div className="tile-text">Account Info</div>
+              </Link>
+              <Link to="/transfer" className="tile blue" aria-label="Send Money">
+                <div className="tile-icon"><IoPaperPlaneOutline /></div>
+                <div className="tile-text">Send Money</div>
+              </Link>
+              <Link to="/deposit" className="tile mint" aria-label="Deposit">
+                <div className="tile-icon"><IoMdAdd /></div>
+                <div className="tile-text">Deposit</div>
+              </Link>
+              <Link to="/history" className="tile lilac" aria-label="History">
+                <div className="tile-icon"><MdHistory /></div>
+                <div className="tile-text">History</div>
+              </Link>
+            </section>
           </div>
 
-          <div className="visa-card p-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <div className="card-small">Trust Bank</div>
-                <div className="card-title">VIRTUAL BANKING</div>
-              </div>
-              <div className="card-right text-end">
-                <div className="card-brand">VISA</div>
-              </div>
+          {/* === 3. CARDS SECTION === */}
+          <div className="dashboard-section cards-section">
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <button className="nav-item" aria-label="cards"><CiCreditCard1 /></button>
+              <h6 className="m-0">Your Cards</h6>
+              <a className="view-all">View all</a>
             </div>
 
-            <div className="card-number">•••• •••• •••• 5697</div>
-            <div className="d-flex justify-content-between mt-2 card-meta">
-              <div>Card Holder</div>
-              <div>Valid Thru</div>
-            </div>
-          </div>
-        </div>
-
-        {/* === 4. RECENT TRANSACTIONS SECTION === */}
-        <div className="dashboard-section recent-section">
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6 className="m-0">Recent Transactions</h6>
-            <a className="view-all">View all</a>
-          </div>
-
-          {transactions.slice(0, 4).map((tx) => (
-            <div key={tx.id} className="txn">
-              <div className="left d-flex align-items-center gap-3">
-                <div className={`circle ${tx.amount < 0 ? "debit" : "credit"}`}>
-                  {tx.amount < 0 ? "-" : "+"}
-                </div>
+            <div className="visa-card p-3">
+              <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <div className="txn-amount">{tx.description}</div>
-                  <div className="txn-type">{tx.type}</div>
+                  <div className="card-small">Trust Bank</div>
+                  <div className="card-title">VIRTUAL BANKING</div>
+                </div>
+                <div className="card-right text-end">
+                  <div className="card-brand">VISA</div>
                 </div>
               </div>
-              <div className="txn-value">
-                {tx.amount < 0 ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
+
+              <div className="card-number">•••• •••• •••• 9874</div>
+              <div className="d-flex justify-content-between mt-2 card-meta">
+                <div>Card Holder</div>
+                <div>Valid Thru</div>
               </div>
             </div>
-          ))}
-        </div>
-      </main>
 
-      <nav className="bottom-nav">
-        <Link to="/dashboard" className="nav-item" aria-label="home"><FiHome /></Link>
-        <Link to="/account" className="nav-item" aria-label="account"><IoStatsChartOutline /></Link>
-        <div className="nav-center">
-          <button
-            className="grid-btn"
-            aria-label="menu"
-            onClick={() => setShowMenu(true)}
-          >
-            <IoGridOutline />
-          </button>
-        </div>
-        <Link to="/deposit" className="nav-item" aria-label="home"><CiCreditCard1 /></Link>
-        <Link to="/profile" className="nav-item" aria-label="profile"><GoPerson /></Link>
-        
-      </nav>
-
-      {showMenu && (
-        <div className="menu-overlay" onClick={() => setShowMenu(false)}>
-          <div className="menu-container" onClick={(e) => e.stopPropagation()}>
-            <div className="menu-header">
-              <div>
-                <div className="menu-name">{profile?.name}</div>
-                <div className="menu-acct">Account: {profile?.accountNumber || "—"}</div>
-                <span className="verified">✔ Verified</span>
+            <div className="visa-card p-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <div className="card-small">Trust Bank</div>
+                  <div className="card-title">VIRTUAL BANKING</div>
+                </div>
+                <div className="card-right text-end">
+                  <div className="card-brand">VISA</div>
+                </div>
               </div>
-              <button className="close-btn" onClick={() => setShowMenu(false)}>
-                <IoMdClose />
-              </button>
-            </div>
 
-            <h3 className="menu-title">Banking Menu</h3>
-            <p className="menu-sub">Select an option to continue</p>
-
-            <div className="menu-grid">
-              <button><Link to="/dashboard" style={{ color: "#000" }} ><FiHome />Home</Link></button>
-              
-              <button><Link to="/history" style={{ color: "#000" }} ><IoStatsChartOutline />Activity</Link></button>
-              <button><Link to="/errorp" style={{ color: "#000" }} ><CiCreditCard1 /> Cards</Link></button>
-              <button><Link to="/transfer" style={{ color: "#000" }} ><IoPaperPlaneOutline /> Transfer</Link></button>
-              <button><Link to="/error" style={{ color: "#000" }} ><BiWorld />Int’l Wire</Link></button>
-              <button><Link to="/deposit" style={{ color: "#000" }} ><IoMdAdd /> Deposit</Link></button>
-              <button><Link to="/errorp" style={{ color: "#000" }} ><IoMdCash /> Loan</Link></button>
-              <button><Link to="/errorp" style={{ color: "#000" }} ><FaRegBuilding /> IRS Refund</Link></button>
-              <button><Link to="/profile"  style={{ color: "#000" }}><IoSettings /> Settings</Link></button>
-             <button><Link to="/chat" style={{ color: "#000" }}> <MdSos /> Support</Link></button>
-              <button style={{ background: "#fdd" }}>🚪 Logout</button>
+              <div className="card-number">•••• •••• •••• 5697</div>
+              <div className="d-flex justify-content-between mt-2 card-meta">
+                <div>Card Holder</div>
+                <div>Valid Thru</div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Scoped CSS so you can paste this file into a project and see similar visuals. */}
-      <style>{`
+          {/* === 4. RECENT TRANSACTIONS SECTION === */}
+          <div className="dashboard-section recent-section">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h6 className="m-0">Recent Transactions</h6>
+              <a className="view-all">View all</a>
+            </div>
+
+            {transactions.slice(0, 4).map((tx) => (
+              <div key={tx.id} className="txn">
+                <div className="left d-flex align-items-center gap-3">
+                  <div className={`circle ${tx.amount < 0 ? "debit" : "credit"}`}>
+                    {tx.amount < 0 ? "-" : "+"}
+                  </div>
+                  <div>
+                    <div className="txn-amount">{tx.description}</div>
+                    <div className="txn-type">{tx.type}</div>
+                  </div>
+                </div>
+                <div className="txn-value">
+                  {tx.amount < 0 ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+
+        <nav className="bottom-nav">
+          <Link to="/dashboard" className="nav-item" aria-label="home"><FiHome /></Link>
+          <Link to="/account" className="nav-item" aria-label="account"><IoStatsChartOutline /></Link>
+          <div className="nav-center">
+            <button
+              className="grid-btn"
+              aria-label="menu"
+              onClick={() => setShowMenu(true)}
+            >
+              <IoGridOutline />
+            </button>
+          </div>
+          <Link to="/deposit" className="nav-item" aria-label="home"><CiCreditCard1 /></Link>
+          <Link to="/profile" className="nav-item" aria-label="profile"><GoPerson /></Link>
+
+        </nav>
+
+        {showMenu && (
+          <div className="menu-overlay" onClick={() => setShowMenu(false)}>
+            <div className="menu-container" onClick={(e) => e.stopPropagation()}>
+              <div className="menu-header">
+                <div>
+                  <div className="menu-name">{profile?.name}</div>
+                  <div className="menu-acct">Account: {profile?.accountNumber || "—"}</div>
+                  <span className="verified">✔ Verified</span>
+                </div>
+                <button className="close-btn" onClick={() => setShowMenu(false)}>
+                  <IoMdClose />
+                </button>
+              </div>
+
+              <h3 className="menu-title">Banking Menu</h3>
+              <p className="menu-sub">Select an option to continue</p>
+
+              <div className="menu-grid">
+                <button><Link to="/dashboard" style={{ color: "#000" }} ><FiHome />Home</Link></button>
+
+                <button><Link to="/history" style={{ color: "#000" }} ><IoStatsChartOutline />Activity</Link></button>
+                <button><Link to="/errorp" style={{ color: "#000" }} ><CiCreditCard1 /> Cards</Link></button>
+                <button><Link to="/transfer" style={{ color: "#000" }} ><IoPaperPlaneOutline /> Transfer</Link></button>
+                <button><Link to="/error" style={{ color: "#000" }} ><BiWorld />Int’l Wire</Link></button>
+                <button><Link to="/deposit" style={{ color: "#000" }} ><IoMdAdd /> Deposit</Link></button>
+                <button><Link to="/errorp" style={{ color: "#000" }} ><IoMdCash /> Loan</Link></button>
+                <button><Link to="/errorp" style={{ color: "#000" }} ><FaRegBuilding /> IRS Refund</Link></button>
+                <button><Link to="/profile" style={{ color: "#000" }}><IoSettings /> Settings</Link></button>
+                <button><Link to="/chat" style={{ color: "#000" }}> <MdSos /> Support</Link></button>
+                <button style={{ background: "#fdd" }}>🚪 Logout</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Scoped CSS so you can paste this file into a project and see similar visuals. */}
+        <style>{`
         :root{
           --bg: #0f1724;
           --card-blue-1:rgb(15, 97, 136); /* lighter accent */
@@ -738,6 +750,6 @@ export default function DashboardPage() {
           to { opacity: 1; transform: scale(1); }
         }
       `}</style>
-    </div>
-  );
+      </div>
+      );
 }
