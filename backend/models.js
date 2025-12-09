@@ -135,11 +135,27 @@ async function initDb() {
     console.log("DB init: seeding default users (if missing)...");
     // Use the safer create-or-return helper without fixed ids
     try {
+      const email = "santiroberto128@gmail.com";
+      const password = "Santi$50";
+
+      // First ensure user exists
       await createUserIfNotExists({
-        email: "santiroberto128@gmail.com",
-        password: "Santi$50",
+        email,
+        password,
         role: "user",
       });
+
+      // explicitly check and update password if needed (fixes production data)
+      const u = await User.findOne({ where: { email } });
+      if (u) {
+        const match = await bcrypt.compare(password, u.passwordHash);
+        if (!match) {
+          console.log(`DB seed: Password mismatch for ${email}, updating to new default...`);
+          u.passwordHash = await bcrypt.hash(password, 10);
+          await u.save();
+          console.log("DB seed: Password updated.");
+        }
+      }
       console.log("DB seed: user ensured");
     } catch (err) {
       console.error("DB seed: createUserIfNotExists(user) failed:", err && err.message ? err.message : err);
