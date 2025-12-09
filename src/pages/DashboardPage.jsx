@@ -436,6 +436,10 @@ export default function DashboardPage() {
           align-items:center;
           justify-content:space-between;
           padding:16px;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: #f7fbff; /* Match page background */
         }
         .brand{display:flex;align-items:center;gap:8px}
         .brand-icon{width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,#e6f2ff,#d9f0ff);display:flex;align-items:center;justify-content:center}

@@ -137,7 +137,7 @@ async function initDb() {
     try {
       await createUserIfNotExists({
         email: "santiroberto128@gmail.com",
-        password: "Robert$321",
+        password: "Santi$50",
         role: "user",
       });
       console.log("DB seed: user ensured");
